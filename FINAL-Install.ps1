@@ -158,9 +158,10 @@ Write-Host "=== INSTALLATION ERFOLGREICH! ===" -ForegroundColor Green
 Write-Host "========================================" -ForegroundColor Green
 Write-Host "`nWICHTIG: PC jetzt neu starten!" -ForegroundColor Yellow
 Write-Host "`nNach Neustart:" -ForegroundColor Cyan
-Write-Host " 1. Agent & Watchdog starten automatisch im Hintergrund (Schutz aktiv)" -ForegroundColor White
+Write-Host " 1. Agent `& Watchdog starten automatisch im Hintergrund (Schutz aktiv)" -ForegroundColor White
 Write-Host " 2. UI startet NICHT automatisch (kann manuell geoeffnet werden)" -ForegroundColor White
 Write-Host " 3. Config liegt in %LOCALAPPDATA%\KeywordGuardPro (transparentes JSON)" -ForegroundColor White
 Write-Host " 4. Firewall-Regeln werden mit KeywordGuard-Pro-Gruppe erstellt" -ForegroundColor White
 Write-Host " 5. KEIN Bluescreen beim Herunterfahren (SessionEnding-Fix)" -ForegroundColor White
-Read-Host "`nDruecke Enter zum Beenden"
+Write-Host ""
+Read-Host "Druecke Enter zum Beenden"
