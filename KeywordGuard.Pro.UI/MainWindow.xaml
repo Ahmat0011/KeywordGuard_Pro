@@ -14,10 +14,23 @@
         </Grid.RowDefinitions>
 
         <!-- HEADER -->
-        <StackPanel Grid.Row="0" Orientation="Vertical" Margin="0,0,0,12">
-            <TextBlock Text="KEYWORD GUARD PRO" FontSize="26" FontWeight="Bold" Foreground="{StaticResource PrimaryBrush}"/>
-            <TextBlock Text="{Binding StatusText}" Foreground="{StaticResource MutedTextBrush}" Margin="0,4,0,0"/>
-        </StackPanel>
+        <Grid Grid.Row="0" Margin="0,0,0,12">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="Auto"/>
+            </Grid.ColumnDefinitions>
+            <StackPanel Orientation="Vertical">
+                <TextBlock Text="KEYWORD GUARD PRO" FontSize="26" FontWeight="Bold" Foreground="{StaticResource PrimaryBrush}"/>
+                <TextBlock Text="{Binding StatusText}" Foreground="{StaticResource MutedTextBrush}" Margin="0,4,0,0"/>
+            </StackPanel>
+            <Button Grid.Column="1"
+                    Content="Hide"
+                    Width="90"
+                    Height="30"
+                    Margin="10,0,0,0"
+                    VerticalAlignment="Top"
+                    Click="HideButton_Click"/>
+        </Grid>
 
         <!-- TIMER PANEL -->
         <Border Grid.Row="1" Background="{StaticResource PanelBrush}" BorderBrush="{StaticResource BorderBrush}" BorderThickness="1" CornerRadius="8" Padding="16" Margin="0,0,0,12">
@@ -92,13 +105,6 @@
                             Height="32"
                             FontSize="14"
                             Command="{Binding AddKeywordCommand}"/>
-                    <Button Content="Gespeicherte laden"
-                            Margin="12,0,0,0"
-                            Height="32"
-                            FontSize="14"
-                            Command="{Binding LoadKeywordsCommand}"
-                            IsEnabled="{Binding CanStartTimer}"
-                            ToolTip="Lädt die im Hintergrund gespeicherten Blockierungen (nur möglich, wenn kein Timer aktiv ist)"/>
                 </StackPanel>
                 
                 <TextBlock Grid.Row="2" Text="Normal = nur exaktes Wort | Aggressiv = auch Teil von anderen Wörtern" 

@@ -1,0 +1,121 @@
+<Window x:Class="KeywordGuard.Pro.UI.HiddenAccessWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Hide - Geschützter Bereich"
+        Width="760"
+        Height="620"
+        WindowStartupLocation="CenterOwner"
+        ResizeMode="CanMinimize">
+    <Grid Margin="16">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+
+        <TextBlock Grid.Row="0"
+                   Text="Versteckte Einstellungen"
+                   FontSize="22"
+                   FontWeight="Bold"
+                   Margin="0,0,0,12"/>
+
+        <Border Grid.Row="1" BorderThickness="1" CornerRadius="8" Padding="12">
+            <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="*"/>
+                </Grid.RowDefinitions>
+
+                <StackPanel x:Name="AuthPanel" Grid.Row="0">
+                    <TextBlock x:Name="AuthInfoText" Margin="0,0,0,10" TextWrapping="Wrap"/>
+
+                    <StackPanel x:Name="EnterPinPanel">
+                        <TextBlock Text="PIN eingeben (4-stellig):"/>
+                        <PasswordBox x:Name="PinInput" Width="180" MaxLength="4" Margin="0,6,0,0"/>
+                        <Button Content="Freischalten"
+                                Width="120"
+                                Margin="0,8,0,10"
+                                Click="UnlockButton_Click"/>
+                    </StackPanel>
+
+                    <StackPanel x:Name="PinSetupPanel" Visibility="Collapsed">
+                        <TextBlock x:Name="PinSetupLabel" Text="Neuen PIN festlegen (4-stellig):"/>
+                        <PasswordBox x:Name="NewPinInput" Width="180" MaxLength="4" Margin="0,6,0,0"/>
+                        <Button x:Name="SavePinButton"
+                                Content="PIN speichern"
+                                Width="140"
+                                Margin="0,8,0,0"
+                                Click="SavePinButton_Click"/>
+                    </StackPanel>
+
+                    <Button x:Name="ForgotPinButton"
+                            Content="PIN vergessen? Neuen PIN setzen (nur wenn Timer aus)"
+                            HorizontalAlignment="Left"
+                            Margin="0,10,0,0"
+                            Click="ForgotPinButton_Click"
+                            Visibility="Collapsed"/>
+                </StackPanel>
+
+                <Grid x:Name="ContentPanel" Grid.Row="1" Visibility="Collapsed">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                    </Grid.RowDefinitions>
+
+                    <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="0,0,0,6">
+                        <TextBlock Text="Timer: " FontWeight="Bold"/>
+                        <TextBlock x:Name="TimerStateText"/>
+                        <TextBlock Text="   |   Blockierstatus: " FontWeight="Bold" Margin="14,0,0,0"/>
+                        <TextBlock x:Name="BlockingStateText" TextWrapping="Wrap"/>
+                    </StackPanel>
+
+                    <TextBlock x:Name="EditLockText"
+                               Grid.Row="1"
+                               Margin="0,0,0,10"
+                               Foreground="DarkRed"
+                               FontWeight="SemiBold"/>
+
+                    <StackPanel Grid.Row="2" Orientation="Horizontal" Margin="0,0,0,10">
+                        <TextBox x:Name="EditValueTextBox" Width="320"/>
+                        <CheckBox x:Name="EditAggressiveCheckBox"
+                                  Content="Aggressiv"
+                                  VerticalAlignment="Center"
+                                  Margin="10,0,0,0"/>
+                        <Button Content="Neu hinzufügen"
+                                Margin="10,0,0,0"
+                                Width="110"
+                                Click="AddButton_Click"/>
+                        <Button Content="Aktualisieren"
+                                Margin="8,0,0,0"
+                                Width="110"
+                                Click="UpdateButton_Click"/>
+                        <Button Content="Löschen"
+                                Margin="8,0,0,0"
+                                Width="90"
+                                Click="DeleteButton_Click"/>
+                    </StackPanel>
+
+                    <ListBox x:Name="StoredItemsListBox"
+                             Grid.Row="3"
+                             SelectionChanged="StoredItemsListBox_SelectionChanged">
+                        <ListBox.ItemTemplate>
+                            <DataTemplate>
+                                <StackPanel Orientation="Horizontal" Margin="4">
+                                    <TextBlock Text="{Binding Value}" FontSize="14"/>
+                                    <TextBlock Text="{Binding AggressiveText}" Margin="8,0,0,0" FontWeight="Bold" Foreground="DarkOrange"/>
+                                </StackPanel>
+                            </DataTemplate>
+                        </ListBox.ItemTemplate>
+                    </ListBox>
+                </Grid>
+            </Grid>
+        </Border>
+
+        <StackPanel Grid.Row="2" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,12,0,0">
+            <Button Content="Aktualisieren" Width="110" Click="RefreshButton_Click"/>
+            <Button Content="Schließen" Width="100" Margin="8,0,0,0" Click="CloseButton_Click"/>
+        </StackPanel>
+    </Grid>
+</Window>
