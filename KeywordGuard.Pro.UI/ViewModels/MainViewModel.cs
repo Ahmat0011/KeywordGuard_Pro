@@ -177,11 +177,11 @@ public class MainViewModel : INotifyPropertyChanged
         message = "";
         if (IsTimerRunning) { message = "Timer aktiv: Änderungen nicht erlaubt."; return false; }
 
-        string trimmed = value.Trim();
+        string trimmed = BlockedTextHelper.NormalizeEntry(value);
         if (string.IsNullOrWhiteSpace(trimmed)) { message = "Bitte einen Wert eingeben."; return false; }
 
         var cfg = ConfigStore.Load() ?? new GuardConfig();
-        if (cfg.Keywords.Any(k => k.Value.Equals(trimmed, StringComparison.OrdinalIgnoreCase)))
+        if (cfg.Keywords.Any(k => BlockedTextHelper.NormalizeEntry(k.Value).Equals(trimmed, StringComparison.OrdinalIgnoreCase)))
         {
             message = "Eintrag existiert bereits.";
             return false;
@@ -198,18 +198,20 @@ public class MainViewModel : INotifyPropertyChanged
         message = "";
         if (IsTimerRunning) { message = "Timer aktiv: Änderungen nicht erlaubt."; return false; }
 
-        string trimmed = newValue.Trim();
+        string trimmed = BlockedTextHelper.NormalizeEntry(newValue);
         if (string.IsNullOrWhiteSpace(trimmed)) { message = "Bitte einen Wert eingeben."; return false; }
 
         var cfg = ConfigStore.Load();
         if (cfg == null) { message = "Keine gespeicherte Konfiguration gefunden."; return false; }
 
-        var existing = cfg.Keywords.FirstOrDefault(k => k.Value.Equals(originalValue, StringComparison.OrdinalIgnoreCase));
+        string normalizedOriginalValue = BlockedTextHelper.NormalizeEntry(originalValue);
+        var existing = cfg.Keywords.FirstOrDefault(k =>
+            BlockedTextHelper.NormalizeEntry(k.Value).Equals(normalizedOriginalValue, StringComparison.OrdinalIgnoreCase));
         if (existing == null) { message = "Eintrag nicht gefunden."; return false; }
 
         bool duplicate = cfg.Keywords.Any(k =>
-            !k.Value.Equals(originalValue, StringComparison.OrdinalIgnoreCase) &&
-            k.Value.Equals(trimmed, StringComparison.OrdinalIgnoreCase));
+            !BlockedTextHelper.NormalizeEntry(k.Value).Equals(normalizedOriginalValue, StringComparison.OrdinalIgnoreCase) &&
+            BlockedTextHelper.NormalizeEntry(k.Value).Equals(trimmed, StringComparison.OrdinalIgnoreCase));
         if (duplicate)
         {
             message = "Neuer Wert existiert bereits.";
@@ -231,7 +233,9 @@ public class MainViewModel : INotifyPropertyChanged
         var cfg = ConfigStore.Load();
         if (cfg == null) { message = "Keine gespeicherte Konfiguration gefunden."; return false; }
 
-        var existing = cfg.Keywords.FirstOrDefault(k => k.Value.Equals(value, StringComparison.OrdinalIgnoreCase));
+        string normalizedValue = BlockedTextHelper.NormalizeEntry(value);
+        var existing = cfg.Keywords.FirstOrDefault(k =>
+            BlockedTextHelper.NormalizeEntry(k.Value).Equals(normalizedValue, StringComparison.OrdinalIgnoreCase));
         if (existing == null) { message = "Eintrag nicht gefunden."; return false; }
 
         cfg.Keywords.Remove(existing);
@@ -298,33 +302,29 @@ public class MainViewModel : INotifyPropertyChanged
     {
         if (string.IsNullOrWhiteSpace(KeywordInput)) return;
 
-        // Teilen nach Komma, Semikolon, Leerzeichen und Zeilenumbruch
-        var parts = KeywordInput.Split(new[] { ',', ';', ' ', '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries);
-        
+        var parts = BlockedTextHelper.SplitEntries(KeywordInput);
+
         foreach (var part in parts)
         {
-            string kw = part.Trim();
-            if (!string.IsNullOrWhiteSpace(kw))
-            {
-                AddSingleKeyword(kw);
-            }
+            AddSingleKeyword(part);
         }
 
         KeywordInput = "";
+        IsAggressive = false;
     }
 
     private void AddSingleKeyword(string value)
     {
-        string kw = value.Trim();
+        string kw = BlockedTextHelper.NormalizeEntry(value);
         if (string.IsNullOrWhiteSpace(kw)) return;
 
-        if (!KeywordItems.Any(k => k.Value.Equals(kw, StringComparison.OrdinalIgnoreCase)))
+        if (!KeywordItems.Any(k => BlockedTextHelper.NormalizeEntry(k.Value).Equals(kw, StringComparison.OrdinalIgnoreCase)))
         {
             KeywordItems.Add(new KeywordDisplayItem { Value = kw, IsAggressive = IsAggressive });
         }
 
         var cfg = ConfigStore.Load() ?? new GuardConfig();
-        if (!cfg.Keywords.Any(k => k.Value.Equals(kw, StringComparison.OrdinalIgnoreCase)))
+        if (!cfg.Keywords.Any(k => BlockedTextHelper.NormalizeEntry(k.Value).Equals(kw, StringComparison.OrdinalIgnoreCase)))
         {
             cfg.Keywords.Add(new BlockedItem { Value = kw, IsAggressive = IsAggressive });
             ConfigStore.Save(cfg);
@@ -344,7 +344,9 @@ public class MainViewModel : INotifyPropertyChanged
         var cfg = ConfigStore.Load();
         if (cfg != null)
         {
-            var existing = cfg.Keywords.FirstOrDefault(k => k.Value.Equals(item.Value, StringComparison.OrdinalIgnoreCase));
+            string normalizedValue = BlockedTextHelper.NormalizeEntry(item.Value);
+            var existing = cfg.Keywords.FirstOrDefault(k =>
+                BlockedTextHelper.NormalizeEntry(k.Value).Equals(normalizedValue, StringComparison.OrdinalIgnoreCase));
             if (existing != null)
             {
                 cfg.Keywords.Remove(existing);
@@ -382,9 +384,11 @@ public class MainViewModel : INotifyPropertyChanged
             // UI-Keywords in Config übernehmen
             foreach (var kw in KeywordItems)
             {
-                if (!string.IsNullOrWhiteSpace(kw.Value) && !cfg.Keywords.Any(k => k.Value.Equals(kw.Value, StringComparison.OrdinalIgnoreCase)))
+                string normalizedValue = BlockedTextHelper.NormalizeEntry(kw.Value);
+                if (!string.IsNullOrWhiteSpace(normalizedValue) &&
+                    !cfg.Keywords.Any(k => BlockedTextHelper.NormalizeEntry(k.Value).Equals(normalizedValue, StringComparison.OrdinalIgnoreCase)))
                 {
-                    cfg.Keywords.Add(new BlockedItem { Value = kw.Value, IsAggressive = kw.IsAggressive });
+                    cfg.Keywords.Add(new BlockedItem { Value = normalizedValue, IsAggressive = kw.IsAggressive });
                 }
             }
 
@@ -443,9 +447,12 @@ public class MainViewModel : INotifyPropertyChanged
 
         // Keywords aus der UI sichern (falls welche da sind)
         foreach (var kw in KeywordItems)
-            if (!string.IsNullOrWhiteSpace(kw.Value) &&
-                !cfg.Keywords.Any(k => k.Value.Equals(kw.Value, StringComparison.OrdinalIgnoreCase)))
-                cfg.Keywords.Add(new BlockedItem { Value = kw.Value, IsAggressive = kw.IsAggressive });
+        {
+            string normalizedValue = BlockedTextHelper.NormalizeEntry(kw.Value);
+            if (!string.IsNullOrWhiteSpace(normalizedValue) &&
+                !cfg.Keywords.Any(k => BlockedTextHelper.NormalizeEntry(k.Value).Equals(normalizedValue, StringComparison.OrdinalIgnoreCase)))
+                cfg.Keywords.Add(new BlockedItem { Value = normalizedValue, IsAggressive = kw.IsAggressive });
+        }
 
         if (_endTime.HasValue && IsTimerRunning)
             cfg.EndTime = _endTime;
