@@ -1,7 +1,6 @@
 using System.Diagnostics;
 using System.Runtime.InteropServices;
 using System.Text;
-using System.Text.RegularExpressions;
 using System.Windows.Forms;
 using Microsoft.Win32;
 using KeywordGuard.Pro.Security;
@@ -324,9 +323,7 @@ static class Program
             {
                 if (string.IsNullOrWhiteSpace(item.Value)) continue;
 
-                bool hit = item.IsAggressive
-                    ? title.Contains(item.Value, StringComparison.OrdinalIgnoreCase)
-                    : Regex.IsMatch(title, @"\b" + Regex.Escape(item.Value) + @"\b", RegexOptions.IgnoreCase);
+                bool hit = BlockedTextHelper.Matches(title, item);
 
                 if (hit && _running && !_isShuttingDown)
                 {
