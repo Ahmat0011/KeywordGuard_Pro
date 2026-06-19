@@ -1,8 +1,8 @@
 {
   "version": 2,
-  "dgSpecHash": "Zp8dEh+U7LQ=",
+  "dgSpecHash": "456zIqLBXMY=",
   "success": true,
-  "projectFilePath": "/home/runner/work/KeywordGuard_Pro/KeywordGuard_Pro/KeywordGuard.Pro.Agent/KeywordGuard.Pro.Agent.csproj",
+  "projectFilePath": "/home/runner/work/KeywordGuard_Pro/KeywordGuard_Pro/KeywordGuard.Pro.Agent.Tests/VerifyHiddenForm.csproj",
   "expectedPackageFiles": [
     "/tmp/codeql-scratch-cd00fe3e7a73e479/dbs/csharp/working/packages/system.codedom/10.0.0/system.codedom.10.0.0.nupkg.sha512",
     "/tmp/codeql-scratch-cd00fe3e7a73e479/dbs/csharp/working/packages/system.management/10.0.0/system.management.10.0.0.nupkg.sha512",

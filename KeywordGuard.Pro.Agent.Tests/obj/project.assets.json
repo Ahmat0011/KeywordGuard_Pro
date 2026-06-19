@@ -43,6 +43,23 @@
           }
         }
       },
+      "KeywordGuard.Pro.Agent/1.0.0": {
+        "type": "project",
+        "framework": ".NETCoreApp,Version=v10.0",
+        "dependencies": {
+          "KeywordGuard.Pro.Security": "1.0.0",
+          "System.Management": "10.0.0"
+        },
+        "compile": {
+          "bin/placeholder/KeywordGuard.Pro.Agent.dll": {}
+        },
+        "runtime": {
+          "bin/placeholder/KeywordGuard.Pro.Agent.dll": {}
+        },
+        "frameworkReferences": [
+          "Microsoft.WindowsDesktop.App.WindowsForms"
+        ]
+      },
       "KeywordGuard.Pro.Security/1.0.0": {
         "type": "project",
         "framework": ".NETCoreApp,Version=v10.0",
@@ -117,6 +134,11 @@
         "useSharedDesignerContext.txt"
       ]
     },
+    "KeywordGuard.Pro.Agent/1.0.0": {
+      "type": "project",
+      "path": "../KeywordGuard.Pro.Agent/KeywordGuard.Pro.Agent.csproj",
+      "msbuildProject": "../KeywordGuard.Pro.Agent/KeywordGuard.Pro.Agent.csproj"
+    },
     "KeywordGuard.Pro.Security/1.0.0": {
       "type": "project",
       "path": "../KeywordGuard.Pro.Security/KeywordGuard.Pro.Security.csproj",
@@ -125,8 +147,7 @@
   },
   "projectFileDependencyGroups": {
     "net10.0-windows": [
-      "KeywordGuard.Pro.Security >= 1.0.0",
-      "System.Management >= 10.0.0"
+      "KeywordGuard.Pro.Agent >= 1.0.0"
     ]
   },
   "packageFolders": {
@@ -135,11 +156,11 @@
   "project": {
     "version": "1.0.0",
     "restore": {
-      "projectUniqueName": "/home/runner/work/KeywordGuard_Pro/KeywordGuard_Pro/KeywordGuard.Pro.Agent/KeywordGuard.Pro.Agent.csproj",
-      "projectName": "KeywordGuard.Pro.Agent",
-      "projectPath": "/home/runner/work/KeywordGuard_Pro/KeywordGuard_Pro/KeywordGuard.Pro.Agent/KeywordGuard.Pro.Agent.csproj",
+      "projectUniqueName": "/home/runner/work/KeywordGuard_Pro/KeywordGuard_Pro/KeywordGuard.Pro.Agent.Tests/VerifyHiddenForm.csproj",
+      "projectName": "VerifyHiddenForm",
+      "projectPath": "/home/runner/work/KeywordGuard_Pro/KeywordGuard_Pro/KeywordGuard.Pro.Agent.Tests/VerifyHiddenForm.csproj",
       "packagesPath": "/tmp/codeql-scratch-cd00fe3e7a73e479/dbs/csharp/working/packages",
-      "outputPath": "/home/runner/work/KeywordGuard_Pro/KeywordGuard_Pro/KeywordGuard.Pro.Agent/obj/",
+      "outputPath": "/home/runner/work/KeywordGuard_Pro/KeywordGuard_Pro/KeywordGuard.Pro.Agent.Tests/obj/",
       "projectStyle": "PackageReference",
       "configFilePaths": [
         "/home/runner/.nuget/NuGet/NuGet.Config"
@@ -155,8 +176,8 @@
           "framework": "net10.0-windows7.0",
           "targetAlias": "net10.0-windows",
           "projectReferences": {
-            "/home/runner/work/KeywordGuard_Pro/KeywordGuard_Pro/KeywordGuard.Pro.Security/KeywordGuard.Pro.Security.csproj": {
-              "projectPath": "/home/runner/work/KeywordGuard_Pro/KeywordGuard_Pro/KeywordGuard.Pro.Security/KeywordGuard.Pro.Security.csproj"
+            "/home/runner/work/KeywordGuard_Pro/KeywordGuard_Pro/KeywordGuard.Pro.Agent/KeywordGuard.Pro.Agent.csproj": {
+              "projectPath": "/home/runner/work/KeywordGuard_Pro/KeywordGuard_Pro/KeywordGuard.Pro.Agent/KeywordGuard.Pro.Agent.csproj"
             }
           }
         }
@@ -177,12 +198,6 @@
       "net10.0-windows": {
         "framework": "net10.0-windows7.0",
         "targetAlias": "net10.0-windows",
-        "dependencies": {
-          "System.Management": {
-            "target": "Package",
-            "version": "[10.0.0, )"
-          }
-        },
         "imports": [
           "net461",
           "net462",

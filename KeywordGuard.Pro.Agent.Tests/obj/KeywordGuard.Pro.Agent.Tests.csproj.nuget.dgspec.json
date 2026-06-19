@@ -1,17 +1,17 @@
 {
   "format": 1,
   "restore": {
-    "/home/runner/work/KeywordGuard_Pro/KeywordGuard_Pro/KeywordGuard.Pro.Agent/KeywordGuard.Pro.Agent.csproj": {}
+    "/home/runner/work/KeywordGuard_Pro/KeywordGuard_Pro/KeywordGuard.Pro.Agent.Tests/KeywordGuard.Pro.Agent.Tests.csproj": {}
   },
   "projects": {
-    "/home/runner/work/KeywordGuard_Pro/KeywordGuard_Pro/KeywordGuard.Pro.Agent/KeywordGuard.Pro.Agent.csproj": {
+    "/home/runner/work/KeywordGuard_Pro/KeywordGuard_Pro/KeywordGuard.Pro.Agent.Tests/KeywordGuard.Pro.Agent.Tests.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "/home/runner/work/KeywordGuard_Pro/KeywordGuard_Pro/KeywordGuard.Pro.Agent/KeywordGuard.Pro.Agent.csproj",
-        "projectName": "KeywordGuard.Pro.Agent",
-        "projectPath": "/home/runner/work/KeywordGuard_Pro/KeywordGuard_Pro/KeywordGuard.Pro.Agent/KeywordGuard.Pro.Agent.csproj",
+        "projectUniqueName": "/home/runner/work/KeywordGuard_Pro/KeywordGuard_Pro/KeywordGuard.Pro.Agent.Tests/KeywordGuard.Pro.Agent.Tests.csproj",
+        "projectName": "KeywordGuard.Pro.Agent.Tests",
+        "projectPath": "/home/runner/work/KeywordGuard_Pro/KeywordGuard_Pro/KeywordGuard.Pro.Agent.Tests/KeywordGuard.Pro.Agent.Tests.csproj",
         "packagesPath": "/tmp/codeql-scratch-cd00fe3e7a73e479/dbs/csharp/working/packages",
-        "outputPath": "/home/runner/work/KeywordGuard_Pro/KeywordGuard_Pro/KeywordGuard.Pro.Agent/obj/",
+        "outputPath": "/home/runner/work/KeywordGuard_Pro/KeywordGuard_Pro/KeywordGuard.Pro.Agent.Tests/obj/",
         "projectStyle": "PackageReference",
         "configFilePaths": [
           "/home/runner/.nuget/NuGet/NuGet.Config"
@@ -49,12 +49,6 @@
         "net10.0-windows": {
           "framework": "net10.0-windows7.0",
           "targetAlias": "net10.0-windows",
-          "dependencies": {
-            "System.Management": {
-              "target": "Package",
-              "version": "[10.0.0, )"
-            }
-          },
           "imports": [
             "net461",
             "net462",
