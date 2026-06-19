@@ -1,0 +1,13 @@
+{
+  "version": 2,
+  "dgSpecHash": "6kbq6mkHVMM=",
+  "success": true,
+  "projectFilePath": "/home/runner/work/KeywordGuard_Pro/KeywordGuard_Pro/KeywordGuard.Pro.UI/KeywordGuard.Pro.UI.csproj",
+  "expectedPackageFiles": [
+    "/tmp/codeql-scratch-cd00fe3e7a73e479/dbs/csharp/working/packages/microsoft.netcore.app.ref/10.0.8/microsoft.netcore.app.ref.10.0.8.nupkg.sha512",
+    "/tmp/codeql-scratch-cd00fe3e7a73e479/dbs/csharp/working/packages/microsoft.windowsdesktop.app.ref/10.0.8/microsoft.windowsdesktop.app.ref.10.0.8.nupkg.sha512",
+    "/tmp/codeql-scratch-cd00fe3e7a73e479/dbs/csharp/working/packages/microsoft.aspnetcore.app.ref/10.0.8/microsoft.aspnetcore.app.ref.10.0.8.nupkg.sha512",
+    "/tmp/codeql-scratch-cd00fe3e7a73e479/dbs/csharp/working/packages/microsoft.netcore.app.host.linux-x64/10.0.8/microsoft.netcore.app.host.linux-x64.10.0.8.nupkg.sha512"
+  ],
+  "logs": []
+}

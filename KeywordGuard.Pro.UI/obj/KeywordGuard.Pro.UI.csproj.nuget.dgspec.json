@@ -1,0 +1,188 @@
+{
+  "format": 1,
+  "restore": {
+    "/home/runner/work/KeywordGuard_Pro/KeywordGuard_Pro/KeywordGuard.Pro.UI/KeywordGuard.Pro.UI.csproj": {}
+  },
+  "projects": {
+    "/home/runner/work/KeywordGuard_Pro/KeywordGuard_Pro/KeywordGuard.Pro.Security/KeywordGuard.Pro.Security.csproj": {
+      "version": "1.0.0",
+      "restore": {
+        "projectUniqueName": "/home/runner/work/KeywordGuard_Pro/KeywordGuard_Pro/KeywordGuard.Pro.Security/KeywordGuard.Pro.Security.csproj",
+        "projectName": "KeywordGuard.Pro.Security",
+        "projectPath": "/home/runner/work/KeywordGuard_Pro/KeywordGuard_Pro/KeywordGuard.Pro.Security/KeywordGuard.Pro.Security.csproj",
+        "packagesPath": "/tmp/codeql-scratch-cd00fe3e7a73e479/dbs/csharp/working/packages",
+        "outputPath": "/home/runner/work/KeywordGuard_Pro/KeywordGuard_Pro/KeywordGuard.Pro.Security/obj/",
+        "projectStyle": "PackageReference",
+        "configFilePaths": [
+          "/home/runner/.nuget/NuGet/NuGet.Config"
+        ],
+        "originalTargetFrameworks": [
+          "net10.0"
+        ],
+        "sources": {
+          "https://api.nuget.org/v3/index.json": {}
+        },
+        "frameworks": {
+          "net10.0": {
+            "framework": "net10.0",
+            "targetAlias": "net10.0",
+            "projectReferences": {}
+          }
+        },
+        "warningProperties": {
+          "warnAsError": [
+            "NU1605"
+          ]
+        },
+        "restoreAuditProperties": {
+          "enableAudit": "true",
+          "auditLevel": "low",
+          "auditMode": "all"
+        },
+        "SdkAnalysisLevel": "10.0.300"
+      },
+      "frameworks": {
+        "net10.0": {
+          "framework": "net10.0",
+          "targetAlias": "net10.0",
+          "imports": [
+            "net461",
+            "net462",
+            "net47",
+            "net471",
+            "net472",
+            "net48",
+            "net481"
+          ],
+          "assetTargetFallback": true,
+          "warn": true,
+          "downloadDependencies": [
+            {
+              "name": "Microsoft.AspNetCore.App.Ref",
+              "version": "[10.0.8, 10.0.8]"
+            },
+            {
+              "name": "Microsoft.NETCore.App.Ref",
+              "version": "[10.0.8, 10.0.8]"
+            },
+            {
+              "name": "Microsoft.WindowsDesktop.App.Ref",
+              "version": "[10.0.8, 10.0.8]"
+            }
+          ],
+          "frameworkReferences": {
+            "Microsoft.NETCore.App": {
+              "privateAssets": "all"
+            }
+          },
+          "runtimeIdentifierGraphPath": "/usr/share/dotnet/sdk/10.0.300/PortableRuntimeIdentifierGraph.json"
+        }
+      }
+    },
+    "/home/runner/work/KeywordGuard_Pro/KeywordGuard_Pro/KeywordGuard.Pro.UI/KeywordGuard.Pro.UI.csproj": {
+      "version": "1.0.0",
+      "restore": {
+        "projectUniqueName": "/home/runner/work/KeywordGuard_Pro/KeywordGuard_Pro/KeywordGuard.Pro.UI/KeywordGuard.Pro.UI.csproj",
+        "projectName": "KeywordGuard.Pro.UI",
+        "projectPath": "/home/runner/work/KeywordGuard_Pro/KeywordGuard_Pro/KeywordGuard.Pro.UI/KeywordGuard.Pro.UI.csproj",
+        "packagesPath": "/tmp/codeql-scratch-cd00fe3e7a73e479/dbs/csharp/working/packages",
+        "outputPath": "/home/runner/work/KeywordGuard_Pro/KeywordGuard_Pro/KeywordGuard.Pro.UI/obj/",
+        "projectStyle": "PackageReference",
+        "configFilePaths": [
+          "/home/runner/.nuget/NuGet/NuGet.Config"
+        ],
+        "originalTargetFrameworks": [
+          "net10.0-windows"
+        ],
+        "sources": {
+          "https://api.nuget.org/v3/index.json": {}
+        },
+        "frameworks": {
+          "net10.0-windows": {
+            "framework": "net10.0-windows7.0",
+            "targetAlias": "net10.0-windows",
+            "projectReferences": {
+              "/home/runner/work/KeywordGuard_Pro/KeywordGuard_Pro/KeywordGuard.Pro.Security/KeywordGuard.Pro.Security.csproj": {
+                "projectPath": "/home/runner/work/KeywordGuard_Pro/KeywordGuard_Pro/KeywordGuard.Pro.Security/KeywordGuard.Pro.Security.csproj"
+              }
+            }
+          }
+        },
+        "warningProperties": {
+          "warnAsError": [
+            "NU1605"
+          ]
+        },
+        "restoreAuditProperties": {
+          "enableAudit": "true",
+          "auditLevel": "low",
+          "auditMode": "all"
+        },
+        "SdkAnalysisLevel": "10.0.300"
+      },
+      "frameworks": {
+        "net10.0-windows": {
+          "framework": "net10.0-windows7.0",
+          "targetAlias": "net10.0-windows",
+          "imports": [
+            "net461",
+            "net462",
+            "net47",
+            "net471",
+            "net472",
+            "net48",
+            "net481"
+          ],
+          "assetTargetFallback": true,
+          "warn": true,
+          "downloadDependencies": [
+            {
+              "name": "Microsoft.AspNetCore.App.Ref",
+              "version": "[10.0.8, 10.0.8]"
+            },
+            {
+              "name": "Microsoft.NETCore.App.Host.linux-x64",
+              "version": "[10.0.8, 10.0.8]"
+            },
+            {
+              "name": "Microsoft.NETCore.App.Ref",
+              "version": "[10.0.8, 10.0.8]"
+            },
+            {
+              "name": "Microsoft.WindowsDesktop.App.Ref",
+              "version": "[10.0.8, 10.0.8]"
+            }
+          ],
+          "frameworkReferences": {
+            "Microsoft.NETCore.App": {
+              "privateAssets": "all"
+            },
+            "Microsoft.WindowsDesktop.App.WPF": {
+              "privateAssets": "none"
+            }
+          },
+          "runtimeIdentifierGraphPath": "/usr/share/dotnet/sdk/10.0.300/PortableRuntimeIdentifierGraph.json",
+          "packagesToPrune": {
+            "Microsoft.VisualBasic": "(,10.3.32767]",
+            "Microsoft.Win32.Registry.AccessControl": "(,9.0.32767]",
+            "Microsoft.Win32.SystemEvents": "(,9.0.32767]",
+            "System.CodeDom": "(,9.0.32767]",
+            "System.Configuration.ConfigurationManager": "(,9.0.32767]",
+            "System.Diagnostics.EventLog": "(,9.0.32767]",
+            "System.Diagnostics.PerformanceCounter": "(,9.0.32767]",
+            "System.DirectoryServices": "(,9.0.32767]",
+            "System.Drawing.Common": "(,9.0.32767]",
+            "System.IO.Packaging": "(,9.0.32767]",
+            "System.Resources.Extensions": "(,9.0.32767]",
+            "System.Security.Cryptography.Pkcs": "(,9.0.32767]",
+            "System.Security.Cryptography.ProtectedData": "(,9.0.32767]",
+            "System.Security.Cryptography.Xml": "(,9.0.32767]",
+            "System.Security.Permissions": "(,9.0.32767]",
+            "System.Threading.AccessControl": "(,9.0.32767]",
+            "System.Windows.Extensions": "(,9.0.32767]"
+          }
+        }
+      }
+    }
+  }
+}

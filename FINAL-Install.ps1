@@ -164,9 +164,13 @@ try {
 Write-Host "[8/8] Konfiguriere Autostart... " -ForegroundColor Yellow
 $AgentExe = "$DestUI\KeywordGuard.Pro.Agent.exe"
 
-# TaskScheduler-Aufgabe fuer Agent-Autostart (mit Admin-Rechten!)
+# TaskScheduler-Aufgabe fuer Agent-Autostart (Register-ScheduledTask statt schtasks.exe, weniger AV-Fehlalarme)
 Write-Host "   Erstelle TaskScheduler fuer Agent..." -ForegroundColor Gray
-schtasks /create /tn "KeywordGuardProStartup" /tr "`"$AgentExe`"" /sc onlogon /rl HIGHEST /f 2>$null | Out-Null
+$taskAction    = New-ScheduledTaskAction -Execute $AgentExe
+$taskTrigger   = New-ScheduledTaskTrigger -AtLogOn
+$taskPrincipal = New-ScheduledTaskPrincipal -UserId $env:USERNAME -RunLevel Highest -LogonType Interactive
+$taskSettings  = New-ScheduledTaskSettingsSet -AllowStartIfOnBatteries -DontStopIfGoingOnBatteries -ExecutionTimeLimit 0
+Register-ScheduledTask -TaskName "KeywordGuardProStartup" -Description "Starts KeywordGuard Pro Agent on user logon" -Action $taskAction -Trigger $taskTrigger -Principal $taskPrincipal -Settings $taskSettings -Force | Out-Null
 Write-Host "   Setze zusaetzlichen HKLM-Run-Autostart fuer Agent..." -ForegroundColor Gray
 New-ItemProperty -Path "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Run" -Name "KeywordGuardProAgent" -Value "`"$AgentExe`"" -PropertyType String -Force | Out-Null
 Write-Host "   Agent wird NICHT sofort gestartet (manueller Start nach Installation)." -ForegroundColor Gray
