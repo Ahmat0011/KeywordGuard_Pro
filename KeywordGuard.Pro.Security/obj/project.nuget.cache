@@ -1,8 +1,10 @@
 {
   "version": 2,
-  "dgSpecHash": "WALKUrEohBI=",
+  "dgSpecHash": "Uc6OJrfS0n8=",
   "success": true,
-  "projectFilePath": "D:\\sahma\\Documents\\GitHub\\KeywordGuard_Pro\\KeywordGuard.Pro.Security\\KeywordGuard.Pro.Security.csproj",
-  "expectedPackageFiles": [],
+  "projectFilePath": "/home/runner/work/KeywordGuard_Pro/KeywordGuard_Pro/KeywordGuard.Pro.Security/KeywordGuard.Pro.Security.csproj",
+  "expectedPackageFiles": [
+    "/home/runner/.nuget/packages/microsoft.windowsdesktop.app.ref/10.0.8/microsoft.windowsdesktop.app.ref.10.0.8.nupkg.sha512"
+  ],
   "logs": []
 }

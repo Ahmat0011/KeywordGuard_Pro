@@ -8,32 +8,24 @@
     "net10.0": []
   },
   "packageFolders": {
-    "C:\\Users\\sahma\\.nuget\\packages\\": {},
-    "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages": {}
+    "/home/runner/.nuget/packages/": {}
   },
   "project": {
     "version": "1.0.0",
     "restore": {
-      "projectUniqueName": "D:\\sahma\\Documents\\GitHub\\KeywordGuard_Pro\\KeywordGuard.Pro.Security\\KeywordGuard.Pro.Security.csproj",
+      "projectUniqueName": "/home/runner/work/KeywordGuard_Pro/KeywordGuard_Pro/KeywordGuard.Pro.Security/KeywordGuard.Pro.Security.csproj",
       "projectName": "KeywordGuard.Pro.Security",
-      "projectPath": "D:\\sahma\\Documents\\GitHub\\KeywordGuard_Pro\\KeywordGuard.Pro.Security\\KeywordGuard.Pro.Security.csproj",
-      "packagesPath": "C:\\Users\\sahma\\.nuget\\packages\\",
-      "outputPath": "D:\\sahma\\Documents\\GitHub\\KeywordGuard_Pro\\KeywordGuard.Pro.Security\\obj\\",
+      "projectPath": "/home/runner/work/KeywordGuard_Pro/KeywordGuard_Pro/KeywordGuard.Pro.Security/KeywordGuard.Pro.Security.csproj",
+      "packagesPath": "/home/runner/.nuget/packages/",
+      "outputPath": "/home/runner/work/KeywordGuard_Pro/KeywordGuard_Pro/KeywordGuard.Pro.Security/obj/",
       "projectStyle": "PackageReference",
-      "fallbackFolders": [
-        "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"
-      ],
       "configFilePaths": [
-        "C:\\Users\\sahma\\AppData\\Roaming\\NuGet\\NuGet.Config",
-        "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.FallbackLocation.config",
-        "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config"
+        "/home/runner/.nuget/NuGet/NuGet.Config"
       ],
       "originalTargetFrameworks": [
         "net10.0"
       ],
       "sources": {
-        "C:\\Program Files (x86)\\Microsoft SDKs\\NuGetPackages\\": {},
-        "C:\\Program Files\\dotnet\\library-packs": {},
         "https://api.nuget.org/v3/index.json": {}
       },
       "frameworks": {
@@ -70,12 +62,18 @@
         ],
         "assetTargetFallback": true,
         "warn": true,
+        "downloadDependencies": [
+          {
+            "name": "Microsoft.WindowsDesktop.App.Ref",
+            "version": "[10.0.8, 10.0.8]"
+          }
+        ],
         "frameworkReferences": {
           "Microsoft.NETCore.App": {
             "privateAssets": "all"
           }
         },
-        "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\10.0.301/PortableRuntimeIdentifierGraph.json",
+        "runtimeIdentifierGraphPath": "/usr/share/dotnet/sdk/10.0.300/PortableRuntimeIdentifierGraph.json",
         "packagesToPrune": {
           "Microsoft.CSharp": "(,4.7.32767]",
           "Microsoft.VisualBasic": "(,10.4.32767]",
