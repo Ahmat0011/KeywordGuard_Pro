@@ -26,9 +26,7 @@ public class KeywordDisplayItem : INotifyPropertyChanged
 
 public class MainViewModel : INotifyPropertyChanged
 {
-    private readonly Services.WordWatcher _wordWatcher = new();
     private readonly DispatcherTimer _countdownTimer = new();
-    private readonly DispatcherTimer _firewallUpdateTimer = new(); // aktualisiert IPs alle 5 Min
     private DateTime? _endTime;
     private bool _isTimerRunning;
 
@@ -89,10 +87,6 @@ public class MainViewModel : INotifyPropertyChanged
 
         _countdownTimer.Interval = TimeSpan.FromSeconds(1);
         _countdownTimer.Tick += (s, e) => UpdateCountdown();
-
-        // Firewall-Update-Timer: alle 5 Minuten IPs neu auflösen
-        _firewallUpdateTimer.Interval = TimeSpan.FromMinutes(5);
-        _firewallUpdateTimer.Tick += (s, e) => UpdateFirewallRules();
 
         // Prüfen, ob Timer noch läuft (nach Absturz o.Ä.)
         RestoreRunningTimer();
@@ -294,17 +288,7 @@ public class MainViewModel : INotifyPropertyChanged
                 _endTime = cfg.EndTime;
                 IsTimerRunning = true;
                 _countdownTimer.Start();
-                _firewallUpdateTimer.Start();
-                _wordWatcher.Start(GetBlockedItems, () => IsTimerRunning);
                 StatusText = "🔒 Schutz wurde wiederhergestellt (Timer lief noch).";
-
-                // Hosts-Datei + Firewall neu aktivieren
-                var domains = ExtractDomains(cfg.Keywords);
-                if (domains.Count > 0)
-                {
-                    HostsBlocker.AddUrls(domains);
-                    FirewallBlocker.AddBlock(domains);
-                }
             }
         }
         catch { }
@@ -347,11 +331,7 @@ public class MainViewModel : INotifyPropertyChanged
 
             if (IsTimerRunning)
             {
-                var domains = ExtractDomains(cfg.Keywords);
-                if (domains.Count > 0)
-                {
-                    FirewallBlocker.UpdateBlocks(domains);
-                }
+                // Durchsetzung erfolgt im Agenten auf Basis der gespeicherten Config.
             }
         }
     }
@@ -373,20 +353,6 @@ public class MainViewModel : INotifyPropertyChanged
         }
     }
 
-    private List<string> ExtractDomains(List<BlockedItem> items)
-    {
-        var domains = new List<string>();
-        foreach (var item in items)
-        {
-            string? domain = UrlHelper.ExtractDomain(item.Value);
-            if (domain != null && !domains.Contains(domain))
-            {
-                domains.Add(domain);
-            }
-        }
-        return domains;
-    }
-
     private void StartTimer()
     {
         try
@@ -402,9 +368,6 @@ public class MainViewModel : INotifyPropertyChanged
             if (days == 0 && hours == 0 && minutes == 0)
             { StatusText = "⚠️ Bitte mindestens 1 Minute."; return; }
             if (_isTimerRunning) return;
-
-            // Admin-Check: Firewall braucht Admin-Rechte
-            bool isAdmin = ProcessHardening.IsAdmin();
 
             _endTime = DateTime.Now + new TimeSpan(days, hours, minutes, 0);
 
@@ -428,39 +391,12 @@ public class MainViewModel : INotifyPropertyChanged
             cfg.EndTime = _endTime;
             ConfigStore.Save(cfg);
 
-            // ===== URL-BLOCKIERUNG STRATEGIE =====
-            // 1. Hosts-Datei (DNS-Level): immer, funktioniert ohne Admin
-            // 2. Firewall (IP-Level): nur mit Admin
-
-            var domains = ExtractDomains(cfg.Keywords);
-
-            // HOSTS-DATEI blockieren – KEIN Admin nötig!
-            if (domains.Count > 0)
-                HostsBlocker.AddUrls(domains);
-
-            // FIREWALL blockieren (nur mit Admin)
-            if (domains.Count > 0)
-            {
-                if (isAdmin)
-                {
-                    FirewallBlocker.UpdateBlocks(domains);
-                }
-                else
-                {
-                    StatusText = "⚠️ Kein Admin – Firewall-Blockierung nicht möglich, nur DNS (hosts) + Fenster-Schließen aktiv";
-                }
-            }
-
             IsTimerRunning = true;
             _countdownTimer.Start();
-            _firewallUpdateTimer.Start();
-            _wordWatcher.Start(GetBlockedItems, () => IsTimerRunning);
+            var domains = cfg.Keywords.Count(k => UrlHelper.ExtractDomain(k.Value) != null);
 
             int totalKeywords = cfg.Keywords.Count;
-            string firewallStatus = isAdmin ? "🔒" : "⚠️";
-            StatusText = $"{firewallStatus} FESTUNG AKTIV – {days}d {hours}h {minutes}m " +
-                         $"({totalKeywords} Keywords, {domains.Count} Domains)" +
-                         (isAdmin ? " [Firewall+DNS]" : " [KEIN ADMIN – DNS+WordWatcher ohne Firewall]");
+            StatusText = $"🔒 Schutz aktiv – {days}d {hours}h {minutes}m ({totalKeywords} Keywords, {domains} Domains). Agent setzt die Regeln durch.";
 
             // Keine UI-Leerung mehr für bessere Transparenz
             // KeywordItems.Clear();
@@ -469,56 +405,6 @@ public class MainViewModel : INotifyPropertyChanged
         {
             MessageBox.Show("FEHLER in StartTimer:\n" + ex.Message, "Timer Fehler");
         }
-    }
-
-    private void UpdateFirewallRules()
-    {
-        try
-        {
-            var cfg = ConfigStore.Load();
-            if (cfg == null || !cfg.IsActive()) return;
-
-            var domains = ExtractDomains(cfg.Keywords);
-            if (domains.Count > 0)
-                FirewallBlocker.UpdateBlocks(domains);
-        }
-        catch { }
-    }
-
-    private List<BlockedItem> GetBlockedItems()
-    {
-        var config = ConfigStore.Load();
-        if (config == null) return new List<BlockedItem>();
-
-        var items = new List<BlockedItem>();
-
-        foreach (var kw in config.Keywords)
-        {
-            string val = kw.Value.Trim();
-            if (string.IsNullOrWhiteSpace(val)) continue;
-
-            string? domain = UrlHelper.ExtractDomain(val);
-            if (domain != null)
-            {
-                // URLs/domains always use aggressive (Contains) matching for the full domain
-                // so that titles like "OK.RU - Google Chrome" are detected regardless of
-                // whether the keyword was added as aggressive or not.
-                items.Add(new BlockedItem { Value = domain, IsAggressive = true });
-
-                // Always add the domain prefix to catch site brand names in titles
-                // (e.g. "ok" from "ok.ru" matches "OK | Odnoklassniki - Google Chrome").
-                // Short prefixes (<=3 chars) use word-boundary matching to avoid false positives
-                // in words like "booking" or "Outlook"; long prefixes use Contains.
-                string domainPart = domain.Split('.')[0];
-                if (!string.IsNullOrWhiteSpace(domainPart) && domainPart != domain && domainPart.Length > 1)
-                    items.Add(new BlockedItem { Value = domainPart, IsAggressive = domainPart.Length > 3 });
-            }
-            else
-            {
-                items.Add(new BlockedItem { Value = val, IsAggressive = kw.IsAggressive });
-            }
-        }
-        return items;
     }
 
     private void UpdateCountdown()
@@ -533,16 +419,10 @@ public class MainViewModel : INotifyPropertyChanged
     private void EndTimer()
     {
         _countdownTimer.Stop();
-        _firewallUpdateTimer.Stop();
         IsTimerRunning = false;
         _endTime = null;
         CountdownText = "00d 00h 00m 00s";
         StatusText = "⏰ Timer abgelaufen. Alle Einschränkungen aufgehoben.";
-        _wordWatcher.Stop();
-
-        // ALLE Blockaden entfernen
-        FirewallBlocker.RemoveAll();
-        HostsBlocker.RemoveAll();
 
         var cfg = ConfigStore.Load() ?? new GuardConfig();
         cfg.EndTime = null;

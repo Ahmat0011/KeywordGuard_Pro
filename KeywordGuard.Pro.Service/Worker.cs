@@ -3,7 +3,6 @@ using KeywordGuard.Pro.Agent;
 using KeywordGuard.Pro.Security;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
-using Microsoft.Win32;
 
 namespace KeywordGuard.Pro.Service;
 
@@ -14,9 +13,6 @@ namespace KeywordGuard.Pro.Service;
 /// </summary>
 public class Worker : BackgroundService
 {
-    private const string RunKeyPath = @"SOFTWARE\Microsoft\Windows\CurrentVersion\Run";
-    private const string AgentRunValueName = "KeywordGuardProAgent";
-
     private readonly ILogger<Worker> _logger;
     private bool _isShuttingDown = false;
     private bool _wasEverActive = false;
@@ -36,13 +32,11 @@ public class Worker : BackgroundService
 
         _logger.LogInformation("Service gestartet.");
         _agentExePath = Path.Combine(AppContext.BaseDirectory, "KeywordGuard.Pro.Agent.exe");
-        EnsureMachineRunAutostart();
 
         while (!stoppingToken.IsCancellationRequested && !_isShuttingDown)
         {
             try
             {
-                EnsureMachineRunAutostart();
                 var config = ConfigStore.Load();
                 bool shouldBeActive = config != null && config.IsActive();
 
@@ -60,7 +54,7 @@ public class Worker : BackgroundService
                             bool started = TaskSchedulerGuard.RunAgentTask();
                             if (!started)
                             {
-                                _logger.LogWarning("TaskScheduler-Start fehlgeschlagen. HKLM-Run-Fallback bleibt aktiv.");
+                                _logger.LogWarning("TaskScheduler-Start fehlgeschlagen.");
                             }
                         }
                     }
@@ -98,32 +92,6 @@ public class Worker : BackgroundService
     {
         _isShuttingDown = true;
         await base.StopAsync(cancellationToken);
-    }
-
-    private void EnsureMachineRunAutostart()
-    {
-        try
-        {
-            if (string.IsNullOrWhiteSpace(_agentExePath) || !File.Exists(_agentExePath))
-            {
-                return;
-            }
-
-            using var runKey = Registry.LocalMachine.OpenSubKey(RunKeyPath, writable: true);
-            if (runKey == null) return;
-
-            string expectedCommand = $"\"{_agentExePath}\"";
-            string? currentValue = runKey.GetValue(AgentRunValueName) as string;
-            if (!string.Equals(currentValue, expectedCommand, StringComparison.Ordinal))
-            {
-                runKey.SetValue(AgentRunValueName, expectedCommand, RegistryValueKind.String);
-                _logger.LogInformation("HKLM-Run-Autostart fuer Agent gesetzt.");
-            }
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Konnte HKLM-Run-Autostart nicht setzen.");
-        }
     }
 
     private static bool IsUserLoggedIn()

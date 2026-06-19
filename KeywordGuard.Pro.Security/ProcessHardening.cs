@@ -6,12 +6,6 @@ namespace KeywordGuard.Pro.Security;
 
 public static class ProcessHardening
 {
-    [DllImport("ntdll.dll", SetLastError = true)]
-    private static extern int RtlSetProcessIsCritical(uint bNew, out uint pbOld, uint bNeedScb);
-
-    [DllImport("ntdll.dll", SetLastError = true)]
-    private static extern int RtlAdjustPrivilege(int Privilege, bool bEnablePrivilege, bool IsThreadPrivilege, out bool PreviousValue);
-
     [DllImport("user32.dll", SetLastError = true)]
     private static extern int GetSystemMetrics(int nIndex);
     private const int SM_SHUTTINGDOWN = 0x2000;
@@ -33,24 +27,12 @@ public static class ProcessHardening
     }
 
     /// <summary>
-    /// Markiert den aktuellen Prozess als systemkritisch.
-    /// Wenn der Prozess ohne vorherige Deaktivierung gekillt wird,
-    /// loest Windows einen Bluescreen aus.
-    /// Nur mit Administratorrechten moeglich.
+    /// Kritischer Prozessmodus bleibt absichtlich deaktiviert,
+    /// um sicherheitskritische Nebenwirkungen und AV-Fehlalarme zu vermeiden.
     /// </summary>
     public static bool SetCritical(bool isCritical)
     {
-        try
-        {
-            // SeDebugPrivilege aktivieren (20)
-            RtlAdjustPrivilege(20, true, false, out bool _);
-            int status = RtlSetProcessIsCritical(isCritical ? 1u : 0u, out _, 0u);
-            return status == 0;
-        }
-        catch
-        {
-            return false;
-        }
+        return false;
     }
 
     public static bool IsAdmin()
