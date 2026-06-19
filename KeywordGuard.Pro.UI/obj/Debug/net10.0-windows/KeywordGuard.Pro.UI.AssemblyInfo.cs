@@ -10,11 +10,12 @@
 using System;
 using System.Reflection;
 
-[assembly: System.Reflection.AssemblyCompanyAttribute("KeywordGuard.Pro.UI")]
+[assembly: System.Reflection.AssemblyCompanyAttribute("KeywordGuard")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
+[assembly: System.Reflection.AssemblyCopyrightAttribute("Copyright © 2024 KeywordGuard")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0")]
-[assembly: System.Reflection.AssemblyProductAttribute("KeywordGuard.Pro.UI")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+8998d4fcd86a0880e7380c6a3df5bb983e74c211")]
+[assembly: System.Reflection.AssemblyProductAttribute("KeywordGuard Pro")]
 [assembly: System.Reflection.AssemblyTitleAttribute("KeywordGuard.Pro.UI")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]
 [assembly: System.Runtime.Versioning.TargetPlatformAttribute("Windows7.0")]

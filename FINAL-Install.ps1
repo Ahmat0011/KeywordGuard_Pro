@@ -167,6 +167,8 @@ $AgentExe = "$DestUI\KeywordGuard.Pro.Agent.exe"
 # TaskScheduler-Aufgabe fuer Agent-Autostart (mit Admin-Rechten!)
 Write-Host "   Erstelle TaskScheduler fuer Agent..." -ForegroundColor Gray
 schtasks /create /tn "KeywordGuardProStartup" /tr "`"$AgentExe`"" /sc onlogon /rl HIGHEST /f 2>$null | Out-Null
+Write-Host "   Setze zusaetzlichen HKLM-Run-Autostart fuer Agent..." -ForegroundColor Gray
+New-ItemProperty -Path "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Run" -Name "KeywordGuardProAgent" -Value "`"$AgentExe`"" -PropertyType String -Force | Out-Null
 Write-Host "   Agent wird NICHT sofort gestartet (manueller Start nach Installation)." -ForegroundColor Gray
 Write-Host "   UI wird NICHT automatisch gestartet." -ForegroundColor Gray
 
