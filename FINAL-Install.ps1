@@ -5,8 +5,8 @@
 # - Session 0 Check im Agent (beendet sich sofort)
 # - Service wartet auf Benutzer-Login
 # - TaskScheduler ist AUTOSTART fuer Agent + UI (Admin-Rechte)
-# - Verschl. Config in %LOCALAPPDATA% (KEIN Admin noetig zum Speichern)
-# - Firewall-Blockierung (KEINE hosts-Datei, unsichtbar)
+# - Transparente Config in %LOCALAPPDATA% (KEIN Admin noetig zum Speichern)
+# - Firewall-Blockierung mit klar benannten Regeln
 # - Volles Logging fuer Fehlersuche
 # ============================================================
 
@@ -20,7 +20,7 @@ $DestUI = "$DestBase\UI"
 
 # Agent-Log + Config-Verzeichnisse
 $LogDir = "C:\ProgramData\KG_Pro"
-# Config wird JETZT in %LOCALAPPDATA%\KG_Pro gespeichert (kein Admin noetig!)
+# Config wird in %LOCALAPPDATA%\KeywordGuardPro gespeichert (kein Admin noetig!)
 # Die Backup-Verzeichnisse werden automatisch vom Programm erstellt.
 
 Write-Host "`n=== KEYWORD GUARD PRO - NEU-INSTALLATION ===`n" -ForegroundColor Cyan
@@ -86,13 +86,9 @@ if (Test-Path $StartupLnk) {
     Write-Host "   Alte Autostart-Verknuepfung geloescht: SystemNetAdapter.lnk" -ForegroundColor Gray
 }
 
-# Verzeichnis des alten Agenten loeschen (Besitzrechte uebernehmen und Berechtigungen zuruecksetzen)
+# Verzeichnis des alten Agenten loeschen
 $OldCacheDir = "C:\ProgramData\Microsoft\Windows\SystemCache\Logs"
 if (Test-Path $OldCacheDir) {
-    takeown /f $OldCacheDir /r /d y 2>$null | Out-Null
-    takeown /f $OldCacheDir /r /d j 2>$null | Out-Null
-    icacls $OldCacheDir /reset /t /c /q 2>$null | Out-Null
-    icacls $OldCacheDir /grant *S-1-5-32-544:F /t /c /q 2>$null | Out-Null
     Remove-Item $OldCacheDir -Recurse -Force -ErrorAction SilentlyContinue
     Write-Host "   Altes Cache-Verzeichnis des Agenten bereinigt." -ForegroundColor Gray
 }
@@ -102,10 +98,6 @@ Start-Sleep -Seconds 2
 # 3. Zielverzeichnis vorbereiten
 Write-Host "[3/8] Erstelle Zielverzeichnis... " -ForegroundColor Yellow
 if (Test-Path $DestBase) {
-    takeown /f $DestBase /A /r /d y 2>$null | Out-Null
-    takeown /f $DestBase /A /r /d j 2>$null | Out-Null
-    icacls $DestBase /reset /t /c /q 2>$null | Out-Null
-    icacls $DestBase /grant *S-1-5-32-544:F /t /c /q 2>$null | Out-Null
     Remove-Item $DestBase -Recurse -Force -ErrorAction SilentlyContinue
 }
 New-Item -ItemType Directory -Force -Path $DestUI | Out-Null
@@ -116,11 +108,6 @@ robocopy "$SourceAgent" "$DestUI" /E /IS /IT /R:2 /W:3
 robocopy "$SourceUI" "$DestUI" /E /IS /IT /R:2 /W:3
 robocopy "$SourceService" "$DestUI" /E /IS /IT /R:2 /W:3
 Write-Host "   Kopiervorgang erfolgreich!" -ForegroundColor Green
-
-# Entferne Zone.Identifier (verhindert Windows-Sicherheitsmeldung "App wurde blockiert")
-Write-Host "   Entferne Zone-Markierungen (Zone.Identifier) von Programmdateien..." -ForegroundColor Gray
-Get-ChildItem -Recurse -Path $DestUI -File | Unblock-File -ErrorAction SilentlyContinue
-Write-Host "   Zone-Markierungen entfernt!" -ForegroundColor Green
 
 # 5. Service installieren
 Write-Host "[5/8] Installiere Windows Service... " -ForegroundColor Yellow
@@ -143,22 +130,9 @@ try {
     Write-Host "   Warnung beim Setzen der Berechtigungen fuer ProgramData/KG_Pro." -ForegroundColor Yellow
 }
 
-# 7. Dateischutz (nur fuer KG_Pro)
-Write-Host "[7/8] Aktiviere Dateischutz... " -ForegroundColor Yellow
-try {
-    $Acl = Get-Acl $DestBase
-    $Acl.SetAccessRuleProtection($true, $false)
-    $SidSystem = New-Object System.Security.Principal.SecurityIdentifier("S-1-5-18")
-    $SidAdmins = New-Object System.Security.Principal.SecurityIdentifier("S-1-5-32-544")
-    $Acl.AddAccessRule((New-Object System.Security.AccessControl.FileSystemAccessRule($SidSystem, "FullControl", "ContainerInherit,ObjectInherit", "None", "Allow")))
-    $Acl.AddAccessRule((New-Object System.Security.AccessControl.FileSystemAccessRule($SidAdmins, "ReadAndExecute", "ContainerInherit,ObjectInherit", "None", "Allow")))
-    $DenyRule = New-Object System.Security.AccessControl.FileSystemAccessRule($SidAdmins, "Delete,DeleteSubdirectoriesAndFiles", "ContainerInherit,ObjectInherit", "None", "Deny")
-    $Acl.AddAccessRule($DenyRule)
-    Set-Acl $DestBase $Acl
-    Write-Host "   Dateischutz aktiv!" -ForegroundColor Green
-} catch {
-    Write-Host "   Warnung beim Dateischutz." -ForegroundColor Yellow
-}
+# 7. Standardberechtigungen beibehalten
+Write-Host "[7/8] Behalte Standard-Dateiberechtigungen bei... " -ForegroundColor Yellow
+Write-Host "   Keine manipulativen ACL-Änderungen angewendet." -ForegroundColor Gray
 
 # 8. Autostart konfigurieren (OHNE sofortigen Start)
 Write-Host "[8/8] Konfiguriere Autostart... " -ForegroundColor Yellow
@@ -171,8 +145,6 @@ $taskTrigger   = New-ScheduledTaskTrigger -AtLogOn
 $taskPrincipal = New-ScheduledTaskPrincipal -UserId $env:USERNAME -RunLevel Highest -LogonType Interactive
 $taskSettings  = New-ScheduledTaskSettingsSet -AllowStartIfOnBatteries -DontStopIfGoingOnBatteries -ExecutionTimeLimit 0
 Register-ScheduledTask -TaskName "KeywordGuardProStartup" -Description "Starts KeywordGuard Pro Agent on user logon" -Action $taskAction -Trigger $taskTrigger -Principal $taskPrincipal -Settings $taskSettings -Force | Out-Null
-Write-Host "   Setze zusaetzlichen HKLM-Run-Autostart fuer Agent..." -ForegroundColor Gray
-New-ItemProperty -Path "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Run" -Name "KeywordGuardProAgent" -Value "`"$AgentExe`"" -PropertyType String -Force | Out-Null
 Write-Host "   Agent wird NICHT sofort gestartet (manueller Start nach Installation)." -ForegroundColor Gray
 Write-Host "   UI wird NICHT automatisch gestartet." -ForegroundColor Gray
 
@@ -188,7 +160,7 @@ Write-Host "`nWICHTIG: PC jetzt neu starten!" -ForegroundColor Yellow
 Write-Host "`nNach Neustart:" -ForegroundColor Cyan
 Write-Host " 1. Agent & Watchdog starten automatisch im Hintergrund (Schutz aktiv)" -ForegroundColor White
 Write-Host " 2. UI startet NICHT automatisch (kann manuell geoeffnet werden)" -ForegroundColor White
-Write-Host " 3. Config liegt zentral in C:\ProgramData\KG_Pro (verschluesselt)" -ForegroundColor White
-Write-Host " 4. Firewall-Regeln statt hosts-Datei (KEINE sichtbaren Eintraege)" -ForegroundColor White
+Write-Host " 3. Config liegt in %LOCALAPPDATA%\KeywordGuardPro (transparentes JSON)" -ForegroundColor White
+Write-Host " 4. Firewall-Regeln werden mit KeywordGuard-Pro-Gruppe erstellt" -ForegroundColor White
 Write-Host " 5. KEIN Bluescreen beim Herunterfahren (SessionEnding-Fix)" -ForegroundColor White
 Read-Host "`nDruecke Enter zum Beenden"

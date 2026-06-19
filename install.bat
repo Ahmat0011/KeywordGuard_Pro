@@ -23,7 +23,7 @@ echo ========================================
 echo.
 
 :: Starte das Installations-Skript
-powershell -ExecutionPolicy Bypass -NoProfile -File "FINAL-Install.ps1"
+powershell -NoProfile -File "FINAL-Install.ps1"
 
 echo.
 echo Installation abgeschlossen.

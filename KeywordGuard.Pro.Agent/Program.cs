@@ -22,21 +22,10 @@ static class Program
     [DllImport("user32.dll")]
     static extern bool PostMessage(IntPtr hWnd, uint Msg, IntPtr wParam, IntPtr lParam);
 
-    [DllImport("user32.dll")]
-    static extern void keybd_event(byte bVk, byte bScan, uint dwFlags, UIntPtr dwExtraInfo);
-
-    [DllImport("user32.dll")]
-    static extern bool SetForegroundWindow(IntPtr hWnd);
-
     [DllImport("user32.dll", SetLastError = true)]
     static extern uint GetWindowThreadProcessId(IntPtr hWnd, out uint lpdwProcessId);
 
     const uint WM_CLOSE = 0x0010;
-    const byte VK_CONTROL = 0x11;
-    const byte VK_W = 0x57;
-    const byte VK_F4 = 0x73;
-    const byte VK_MENU = 0x12;
-    const uint KEYEVENTF_KEYUP = 0x0002;
 
     // ============================================================
     // Zustand
