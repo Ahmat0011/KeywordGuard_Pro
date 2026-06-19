@@ -117,6 +117,11 @@ robocopy "$SourceUI" "$DestUI" /E /IS /IT /R:2 /W:3
 robocopy "$SourceService" "$DestUI" /E /IS /IT /R:2 /W:3
 Write-Host "   Kopiervorgang erfolgreich!" -ForegroundColor Green
 
+# Entferne Zone.Identifier (verhindert Windows-Sicherheitsmeldung "App wurde blockiert")
+Write-Host "   Entferne Zone-Markierungen (Zone.Identifier) von Programmdateien..." -ForegroundColor Gray
+Get-ChildItem -Recurse -Path $DestUI -File | Unblock-File -ErrorAction SilentlyContinue
+Write-Host "   Zone-Markierungen entfernt!" -ForegroundColor Green
+
 # 5. Service installieren
 Write-Host "[5/8] Installiere Windows Service... " -ForegroundColor Yellow
 $ServiceExe = "$DestUI\KeywordGuard.Pro.Service.exe"
