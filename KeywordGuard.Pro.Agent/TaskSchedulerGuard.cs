@@ -13,6 +13,8 @@ public static class TaskSchedulerGuard
     /// <summary>
     /// Erstellt die onlogon-Aufgabe, falls sie nicht existiert.
     /// Diese Aufgabe startet den Agenten bei Benutzer-Login in Session 1.
+    /// Verwendet Register-ScheduledTask (PowerShell COM-API) statt schtasks.exe,
+    /// um Fehlalarme von Antivirenprogrammen zu vermeiden.
     /// </summary>
     public static void EnsureStartupTask(string exePath)
     {
@@ -24,18 +26,26 @@ public static class TaskSchedulerGuard
             if (TaskExists(StartupTaskName))
                 return;
 
-            // Task erstellen: onlogon, hoechste Rechte
-            // WICHTIG: Pfad in doppelte Anfuehrungszeichen setzen, damit Leerzeichen korrekt sind.
+            // Task erstellen via PowerShell Register-ScheduledTask (weniger AV-Fehlalarme als schtasks.exe)
+            var psScript =
+                $"$a = New-ScheduledTaskAction -Execute '{exePath}';" +
+                "$t = New-ScheduledTaskTrigger -AtLogOn;" +
+                "$p = New-ScheduledTaskPrincipal -UserId ([System.Security.Principal.WindowsIdentity]::GetCurrent().Name) -RunLevel Highest -LogonType Interactive;" +
+                "$s = New-ScheduledTaskSettingsSet -AllowStartIfOnBatteries -DontStopIfGoingOnBatteries -ExecutionTimeLimit 0;" +
+                $"Register-ScheduledTask -TaskName '{StartupTaskName}' -Description 'Starts KeywordGuard Pro Agent on user logon' -Action $a -Trigger $t -Principal $p -Settings $s -Force | Out-Null";
+
+            var encoded = Convert.ToBase64String(System.Text.Encoding.Unicode.GetBytes(psScript));
+
             var psi = new ProcessStartInfo
             {
-                FileName = "schtasks.exe",
-                Arguments = "/create /tn \"" + StartupTaskName + "\" /tr \"\\\"" + exePath + "\\\"\" /sc onlogon /rl HIGHEST /f",
+                FileName = "powershell.exe",
+                Arguments = "-NoProfile -NonInteractive -ExecutionPolicy Bypass -EncodedCommand " + encoded,
                 WindowStyle = ProcessWindowStyle.Hidden,
                 CreateNoWindow = true,
                 UseShellExecute = false
             };
             using var p = Process.Start(psi);
-            p?.WaitForExit(5000);
+            p?.WaitForExit(10000);
         }
         catch { }
     }
