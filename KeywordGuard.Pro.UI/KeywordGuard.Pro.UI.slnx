@@ -1,0 +1,6 @@
+<Solution>
+  <Project Path="../KeywordGuard.Pro.Agent/KeywordGuard.Pro.Agent.csproj" />
+  <Project Path="../KeywordGuard.Pro.Security/KeywordGuard.Pro.Security.csproj" />
+  <Project Path="../KeywordGuard.Pro.Service/KeywordGuard.Pro.Service.csproj" />
+  <Project Path="KeywordGuard.Pro.UI.csproj" />
+</Solution>

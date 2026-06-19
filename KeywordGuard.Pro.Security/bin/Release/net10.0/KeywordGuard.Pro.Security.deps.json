@@ -1,0 +1,23 @@
+{
+  "runtimeTarget": {
+    "name": ".NETCoreApp,Version=v10.0",
+    "signature": ""
+  },
+  "compilationOptions": {},
+  "targets": {
+    ".NETCoreApp,Version=v10.0": {
+      "KeywordGuard.Pro.Security/1.0.0": {
+        "runtime": {
+          "KeywordGuard.Pro.Security.dll": {}
+        }
+      }
+    }
+  },
+  "libraries": {
+    "KeywordGuard.Pro.Security/1.0.0": {
+      "type": "project",
+      "serviceable": false,
+      "sha512": ""
+    }
+  }
+}
