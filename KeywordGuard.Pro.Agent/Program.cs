@@ -2,7 +2,6 @@ using System.Diagnostics;
 using System.Runtime.InteropServices;
 using System.Text;
 using System.Text.RegularExpressions;
-using System.Management;
 using System.Windows.Forms;
 using Microsoft.Win32;
 using KeywordGuard.Pro.Security;
@@ -191,7 +190,6 @@ static class Program
                 {
                     bool justActivated = !_wasEverActivated;
                     _wasEverActivated = true;
-                    ProcessHardening.SetCritical(true);
 
                     // KEYWORD-BLOCKIERUNG
                     var targets = new List<BlockedItem>();
@@ -249,8 +247,6 @@ static class Program
                         }
                         _lastFirewallUpdate = DateTime.Now;
                     }
-
-                    ScanDangerousProcesses();
                 }
                 else if (config == null)
                 {
@@ -363,81 +359,6 @@ static class Program
         {
             Log("Fehler beim Schliessen des Fensters: " + ex.Message);
         }
-    }
-
-    // ============================================================
-    // WMI-Scanner – Killt gefaehrliche Prozesse
-    // ============================================================
-    static void ScanDangerousProcesses()
-    {
-        try
-        {
-            var query = "SELECT ProcessId, CommandLine, Name FROM Win32_Process WHERE " +
-                "Name='cmd.exe' OR Name='powershell.exe' OR Name='pwsh.exe' OR " +
-                "Name='sc.exe' OR Name='schtasks.exe' OR " +
-                "Name='wmic.exe' OR Name='taskmgr.exe' OR " +
-                "Name='procexp.exe' OR Name='procexp64.exe' OR " +
-                "Name='ProcessHacker.exe' OR Name='procmon.exe'";
-
-            using var searcher = new ManagementObjectSearcher(query);
-            foreach (var obj in searcher.Get())
-            {
-                string cmdLine = obj["CommandLine"]?.ToString() ?? "";
-                string name = obj["Name"]?.ToString() ?? "";
-                if (string.IsNullOrEmpty(cmdLine)) continue;
-
-                int pid = Convert.ToInt32(obj["ProcessId"]);
-                if (pid == Process.GetCurrentProcess().Id) continue;
-
-                // Task-Manager, Process Explorer etc. sofort killen
-                if (name.Equals("taskmgr.exe", StringComparison.OrdinalIgnoreCase) ||
-                    name.Equals("procexp.exe", StringComparison.OrdinalIgnoreCase) ||
-                    name.Equals("procexp64.exe", StringComparison.OrdinalIgnoreCase) ||
-                    name.Equals("ProcessHacker.exe", StringComparison.OrdinalIgnoreCase) ||
-                    name.Equals("procmon.exe", StringComparison.OrdinalIgnoreCase))
-                {
-                    try { Process.GetProcessById(pid).Kill(); Log("KILL: " + name + " (PID " + pid + ")"); } catch { }
-                    continue;
-                }
-
-                // sc.exe / schtasks.exe mit gefaehrlichen Parametern killen
-                if (name.Equals("sc.exe", StringComparison.OrdinalIgnoreCase) ||
-                    name.Equals("schtasks.exe", StringComparison.OrdinalIgnoreCase))
-                {
-                    if (cmdLine.Contains("KeywordGuard", StringComparison.OrdinalIgnoreCase) ||
-                        cmdLine.Contains("delete", StringComparison.OrdinalIgnoreCase) ||
-                        cmdLine.Contains("stop", StringComparison.OrdinalIgnoreCase) ||
-                        cmdLine.Contains("disable", StringComparison.OrdinalIgnoreCase))
-                    {
-                        try { Process.GetProcessById(pid).Kill(); Log("KILL: " + name + " (PID " + pid + ")"); } catch { }
-                        continue;
-                    }
-                }
-
-                // Shells mit gefaehrlichen Befehlen killen (nur wenn sie unser Projekt targeten)
-                if (name.Equals("cmd.exe", StringComparison.OrdinalIgnoreCase) ||
-                    name.Equals("powershell.exe", StringComparison.OrdinalIgnoreCase) ||
-                    name.Equals("pwsh.exe", StringComparison.OrdinalIgnoreCase))
-                {
-                    bool targetsProject = cmdLine.Contains("keywordguard", StringComparison.OrdinalIgnoreCase) ||
-                                          cmdLine.Contains("kg_pro", StringComparison.OrdinalIgnoreCase);
-                    if (targetsProject)
-                    {
-                        string[] dangerous = { "taskkill", "stop-process", "kill", "remove-item",
-                            "del", "delete", "stop", "disable", "takeown", "icacls", "uninstall", "remove-service" };
-                        foreach (var kw in dangerous)
-                        {
-                            if (cmdLine.Contains(kw, StringComparison.OrdinalIgnoreCase))
-                            {
-                                try { Process.GetProcessById(pid).Kill(); Log("KILL SHELL: PID " + pid + " ('" + kw + "')"); } catch { }
-                                break;
-                            }
-                        }
-                    }
-                }
-            }
-        }
-        catch { }
     }
 
     private static List<string> ExtractDomains(List<BlockedItem> items)

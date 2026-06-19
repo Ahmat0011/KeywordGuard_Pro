@@ -25,11 +25,11 @@ public static class TaskSchedulerGuard
                 return;
 
             // Task erstellen: onlogon, hoechste Rechte
-            // WICHTIG: einfache Anführungszeichen für Pfade mit Leerzeichen!
+            // WICHTIG: Pfad in doppelte Anfuehrungszeichen setzen, damit Leerzeichen korrekt sind.
             var psi = new ProcessStartInfo
             {
                 FileName = "schtasks.exe",
-                Arguments = "/create /tn \"" + StartupTaskName + "\" /tr \"'" + exePath + "'\" /sc onlogon /rl HIGHEST /f",
+                Arguments = "/create /tn \"" + StartupTaskName + "\" /tr \"\\\"" + exePath + "\\\"\" /sc onlogon /rl HIGHEST /f",
                 WindowStyle = ProcessWindowStyle.Hidden,
                 CreateNoWindow = true,
                 UseShellExecute = false

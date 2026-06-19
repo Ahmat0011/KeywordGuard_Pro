@@ -15,7 +15,6 @@ public class Worker : BackgroundService
 {
     private readonly ILogger<Worker> _logger;
     private bool _isShuttingDown = false;
-    private bool _isCritical = false;
     private bool _wasEverActive = false;
 
     public Worker(ILogger<Worker> logger)
@@ -27,22 +26,7 @@ public class Worker : BackgroundService
     {
         stoppingToken.Register(() =>
         {
-            // Pruefen ob das ein echter Windows-Shutdown ist
-            if (!ProcessHardening.IsSystemShuttingDown())
-            {
-                var config = ConfigStore.Load();
-                bool timerActive = (config != null && config.IsActive()) ||
-                                   (config == null && _wasEverActive);
-                if (timerActive)
-                {
-                    _logger.LogWarning("MANUELLER STOPP-VERSUCH! Timer aktiv -> Blockiere.");
-                    BlockingLoop(stoppingToken);
-                    return;
-                }
-            }
-
             _isShuttingDown = true;
-            DeactivateCritical();
         });
 
         _logger.LogInformation("Service gestartet.");
@@ -57,7 +41,6 @@ public class Worker : BackgroundService
                 if (shouldBeActive)
                 {
                     _wasEverActive = true;
-                    ActivateCritical();
 
                     // Agent ueberwachen
                     var agentProcs = Process.GetProcessesByName("KeywordGuard.Pro.Agent");
@@ -84,7 +67,6 @@ public class Worker : BackgroundService
                     }
                     else
                     {
-                        DeactivateCritical();
                         _wasEverActive = false;
                     }
                 }
@@ -97,68 +79,13 @@ public class Worker : BackgroundService
             await Task.Delay(2000, stoppingToken);
         }
 
-        DeactivateCritical();
         _logger.LogInformation("Service beendet.");
     }
 
     public override async Task StopAsync(CancellationToken cancellationToken)
     {
-        var config = ConfigStore.Load();
-        bool timerActive = (config != null && config.IsActive()) ||
-                           (config == null && _wasEverActive);
-        if (timerActive && !ProcessHardening.IsSystemShuttingDown())
-        {
-            _logger.LogWarning("StopAsync blockiert – Timer noch aktiv!");
-            await Task.Delay(Timeout.Infinite, cancellationToken);
-            return;
-        }
-
         _isShuttingDown = true;
-        DeactivateCritical();
         await base.StopAsync(cancellationToken);
-    }
-
-    private void BlockingLoop(CancellationToken token)
-    {
-        _logger.LogWarning("BLOCKING-LOOP: Service verweigert Stopp.");
-        while (!token.IsCancellationRequested)
-        {
-            try
-            {
-                var config = ConfigStore.Load();
-                bool timerStillActive = (config != null && config.IsActive()) ||
-                                        (config == null && _wasEverActive);
-                if (!timerStillActive)
-                {
-                    _logger.LogInformation("Timer abgelaufen -> Stopp freigegeben.");
-                    DeactivateCritical();
-                    _isShuttingDown = true;
-                    return;
-                }
-                Thread.Sleep(1000);
-            }
-            catch
-            {
-                Thread.Sleep(1000);
-            }
-        }
-    }
-
-    private void ActivateCritical()
-    {
-        if (!_isCritical)
-        {
-            _isCritical = true;
-            _logger.LogInformation("Service als kritisch markiert (simuliert, API deaktiviert).");
-        }
-    }
-
-    private void DeactivateCritical()
-    {
-        if (_isCritical)
-        {
-            _isCritical = false;
-        }
     }
 
     private static bool IsUserLoggedIn()
