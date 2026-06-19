@@ -155,23 +155,15 @@ try {
     Write-Host "   Warnung beim Dateischutz." -ForegroundColor Yellow
 }
 
-# 8. Agent starten + TaskScheduler fuer Agent + UI
-Write-Host "[8/8] Starte Komponenten... " -ForegroundColor Yellow
+# 8. Autostart konfigurieren (OHNE sofortigen Start)
+Write-Host "[8/8] Konfiguriere Autostart... " -ForegroundColor Yellow
 $AgentExe = "$DestUI\KeywordGuard.Pro.Agent.exe"
-$UIExe = "$DestUI\KeywordGuard.Pro.UI.exe"
 
 # TaskScheduler-Aufgabe fuer Agent-Autostart (mit Admin-Rechten!)
-# WICHTIG: Einfache Anführungszeichen, damit der Pfad mit Leerzeichen korrekt ist!
 Write-Host "   Erstelle TaskScheduler fuer Agent..." -ForegroundColor Gray
-schtasks /create /tn "KeywordGuardProStartup" /tr "'$AgentExe'" /sc onlogon /rl HIGHEST /f 2>$null | Out-Null
-
-# Agent sofort starten
-Write-Host "   Starte Agent..." -ForegroundColor Gray
-Start-Process -FilePath $AgentExe -WindowStyle Hidden
-
-# UI sofort starten (nur beim Installieren, nicht beim Booten!)
-Write-Host "   Starte UI..." -ForegroundColor Gray
-Start-Process -FilePath $UIExe
+schtasks /create /tn "KeywordGuardProStartup" /tr "`"$AgentExe`"" /sc onlogon /rl HIGHEST /f 2>$null | Out-Null
+Write-Host "   Agent wird NICHT sofort gestartet (manueller Start nach Installation)." -ForegroundColor Gray
+Write-Host "   UI wird NICHT automatisch gestartet." -ForegroundColor Gray
 
 # Alle alten Firewall-Regeln von KG_Pro entfernen (sauberer Zustand)
 Write-Host "   Raeume alte Firewall-Regeln auf..." -ForegroundColor Gray
