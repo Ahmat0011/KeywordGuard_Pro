@@ -340,13 +340,18 @@ public class MainViewModel : INotifyPropertyChanged
             string? domain = UrlHelper.ExtractDomain(val);
             if (domain != null)
             {
-                items.Add(new BlockedItem { Value = domain, IsAggressive = kw.IsAggressive });
-                if (kw.IsAggressive)
-                {
-                    string domainPart = domain.Split('.')[0];
-                    if (!string.IsNullOrWhiteSpace(domainPart) && domainPart != domain && domainPart.Length > 3)
-                        items.Add(new BlockedItem { Value = domainPart, IsAggressive = true });
-                }
+                // URLs/domains always use aggressive (Contains) matching for the full domain
+                // so that titles like "OK.RU - Google Chrome" are detected regardless of
+                // whether the keyword was added as aggressive or not.
+                items.Add(new BlockedItem { Value = domain, IsAggressive = true });
+
+                // Always add the domain prefix to catch site brand names in titles
+                // (e.g. "ok" from "ok.ru" matches "OK | Odnoklassniki - Google Chrome").
+                // Short prefixes (<=3 chars) use word-boundary matching to avoid false positives
+                // in words like "booking" or "Outlook"; long prefixes use Contains.
+                string domainPart = domain.Split('.')[0];
+                if (!string.IsNullOrWhiteSpace(domainPart) && domainPart != domain && domainPart.Length > 1)
+                    items.Add(new BlockedItem { Value = domainPart, IsAggressive = domainPart.Length > 3 });
             }
             else
             {

@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("KeywordGuard.Pro.Agent")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Release")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+36f0a6462223b03f30d38e28b64412211692914d")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+cf73e7a52a3e6e322b3aca13c075120d1be2a505")]
 [assembly: System.Reflection.AssemblyProductAttribute("KeywordGuard.Pro.Agent")]
 [assembly: System.Reflection.AssemblyTitleAttribute("KeywordGuard.Pro.Agent")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]
