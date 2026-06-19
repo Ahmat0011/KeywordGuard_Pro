@@ -10,7 +10,7 @@ if %errorLevel% neq 0 (
     echo.
     echo Starte als Administrator...
     echo.
-    powershell -Command "Start-Process -FilePath '%~f0' -Verb RunAs"
+    powershell -ExecutionPolicy Bypass -Command "Start-Process -FilePath '%~f0' -Verb RunAs"
     exit /b
 )
 
@@ -23,7 +23,7 @@ echo ========================================
 echo.
 
 :: Starte das Installations-Skript
-powershell -NoProfile -File "FINAL-Install.ps1"
+powershell -NoProfile -ExecutionPolicy Bypass -File "FINAL-Install.ps1"
 
 echo.
 echo Installation abgeschlossen.
