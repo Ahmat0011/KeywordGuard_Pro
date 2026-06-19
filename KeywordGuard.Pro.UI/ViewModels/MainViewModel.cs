@@ -1,5 +1,7 @@
 using System.Collections.ObjectModel;
 using System.ComponentModel;
+using System.Security.Cryptography;
+using System.Text;
 using System.Runtime.CompilerServices;
 using System.Windows;
 using System.Windows.Input;
@@ -78,14 +80,12 @@ public class MainViewModel : INotifyPropertyChanged
     public ICommand AddKeywordCommand { get; }
     public ICommand RemoveKeywordCommand { get; }
     public ICommand StartTimerCommand { get; }
-    public ICommand LoadKeywordsCommand { get; }
 
     public MainViewModel()
     {
         AddKeywordCommand = new RelayCommand(AddKeyword);
         RemoveKeywordCommand = new RelayCommand<KeywordDisplayItem?>(RemoveKeyword);
         StartTimerCommand = new RelayCommand(StartTimer);
-        LoadKeywordsCommand = new RelayCommand(LoadStoredKeywordsToUI);
 
         _countdownTimer.Interval = TimeSpan.FromSeconds(1);
         _countdownTimer.Tick += (s, e) => UpdateCountdown();
@@ -97,11 +97,8 @@ public class MainViewModel : INotifyPropertyChanged
         // Prüfen, ob Timer noch läuft (nach Absturz o.Ä.)
         RestoreRunningTimer();
 
-        // Immer die gespeicherten Keywords in die UI laden, damit der Benutzer sieht, was eingetragen ist
-        LoadStoredKeywordsToUI();
-
         if (!IsTimerRunning)
-            StatusText = "✅ Bereit. Wörter eintragen und Timer starten.";
+            StatusText = "✅ Bereit. Gespeicherte Blockierungen sind über „Hide“ erreichbar.";
     }
 
     private void LoadStoredKeywordsToUI()
@@ -119,6 +116,169 @@ public class MainViewModel : INotifyPropertyChanged
             StatusText = $"ℹ️ {cfg.Keywords.Count} gespeicherte Blockierungen geladen.";
         }
         catch { }
+    }
+
+    public bool HasConfiguredPin()
+    {
+        var cfg = ConfigStore.Load();
+        return !string.IsNullOrWhiteSpace(cfg?.PinHash) && !string.IsNullOrWhiteSpace(cfg?.PinSalt);
+    }
+
+    public bool IsValidPin(string pin)
+    {
+        return !string.IsNullOrWhiteSpace(pin) && pin.Length == 4 && pin.All(char.IsDigit);
+    }
+
+    public bool CreatePin(string pin)
+    {
+        if (!IsValidPin(pin)) return false;
+
+        var cfg = ConfigStore.Load() ?? new GuardConfig();
+        if (!string.IsNullOrWhiteSpace(cfg.PinHash) && !string.IsNullOrWhiteSpace(cfg.PinSalt))
+            return false;
+
+        (string hash, string salt) = CreatePinHash(pin);
+        cfg.PinHash = hash;
+        cfg.PinSalt = salt;
+        ConfigStore.Save(cfg);
+        return true;
+    }
+
+    public bool VerifyPin(string pin)
+    {
+        if (!IsValidPin(pin)) return false;
+        var cfg = ConfigStore.Load();
+        if (cfg == null || string.IsNullOrWhiteSpace(cfg.PinHash) || string.IsNullOrWhiteSpace(cfg.PinSalt))
+            return false;
+
+        return VerifyPinHash(pin, cfg.PinSalt, cfg.PinHash);
+    }
+
+    public bool ResetPin(string pin)
+    {
+        if (IsTimerRunning || !IsValidPin(pin)) return false;
+
+        var cfg = ConfigStore.Load() ?? new GuardConfig();
+        (string hash, string salt) = CreatePinHash(pin);
+        cfg.PinHash = hash;
+        cfg.PinSalt = salt;
+        ConfigStore.Save(cfg);
+        return true;
+    }
+
+    public List<KeywordDisplayItem> GetStoredKeywords()
+    {
+        var cfg = ConfigStore.Load();
+        if (cfg == null)
+            return new List<KeywordDisplayItem>();
+
+        return cfg.Keywords
+            .Select(k => new KeywordDisplayItem { Value = k.Value, IsAggressive = k.IsAggressive })
+            .OrderBy(k => k.Value, StringComparer.OrdinalIgnoreCase)
+            .ToList();
+    }
+
+    public bool TryAddStoredKeyword(string value, bool isAggressive, out string message)
+    {
+        message = "";
+        if (IsTimerRunning) { message = "Timer aktiv: Änderungen nicht erlaubt."; return false; }
+
+        string trimmed = value.Trim();
+        if (string.IsNullOrWhiteSpace(trimmed)) { message = "Bitte einen Wert eingeben."; return false; }
+
+        var cfg = ConfigStore.Load() ?? new GuardConfig();
+        if (cfg.Keywords.Any(k => k.Value.Equals(trimmed, StringComparison.OrdinalIgnoreCase)))
+        {
+            message = "Eintrag existiert bereits.";
+            return false;
+        }
+
+        cfg.Keywords.Add(new BlockedItem { Value = trimmed, IsAggressive = isAggressive });
+        ConfigStore.Save(cfg);
+        message = "Eintrag hinzugefügt.";
+        return true;
+    }
+
+    public bool TryUpdateStoredKeyword(string originalValue, string newValue, bool isAggressive, out string message)
+    {
+        message = "";
+        if (IsTimerRunning) { message = "Timer aktiv: Änderungen nicht erlaubt."; return false; }
+
+        string trimmed = newValue.Trim();
+        if (string.IsNullOrWhiteSpace(trimmed)) { message = "Bitte einen Wert eingeben."; return false; }
+
+        var cfg = ConfigStore.Load();
+        if (cfg == null) { message = "Keine gespeicherte Konfiguration gefunden."; return false; }
+
+        var existing = cfg.Keywords.FirstOrDefault(k => k.Value.Equals(originalValue, StringComparison.OrdinalIgnoreCase));
+        if (existing == null) { message = "Eintrag nicht gefunden."; return false; }
+
+        bool duplicate = cfg.Keywords.Any(k =>
+            !k.Value.Equals(originalValue, StringComparison.OrdinalIgnoreCase) &&
+            k.Value.Equals(trimmed, StringComparison.OrdinalIgnoreCase));
+        if (duplicate)
+        {
+            message = "Neuer Wert existiert bereits.";
+            return false;
+        }
+
+        existing.Value = trimmed;
+        existing.IsAggressive = isAggressive;
+        ConfigStore.Save(cfg);
+        message = "Eintrag aktualisiert.";
+        return true;
+    }
+
+    public bool TryDeleteStoredKeyword(string value, out string message)
+    {
+        message = "";
+        if (IsTimerRunning) { message = "Timer aktiv: Änderungen nicht erlaubt."; return false; }
+
+        var cfg = ConfigStore.Load();
+        if (cfg == null) { message = "Keine gespeicherte Konfiguration gefunden."; return false; }
+
+        var existing = cfg.Keywords.FirstOrDefault(k => k.Value.Equals(value, StringComparison.OrdinalIgnoreCase));
+        if (existing == null) { message = "Eintrag nicht gefunden."; return false; }
+
+        cfg.Keywords.Remove(existing);
+        ConfigStore.Save(cfg);
+        message = "Eintrag gelöscht.";
+        return true;
+    }
+
+    private static (string Hash, string Salt) CreatePinHash(string pin)
+    {
+        byte[] salt = RandomNumberGenerator.GetBytes(16);
+        byte[] pinBytes = Encoding.UTF8.GetBytes(pin);
+        byte[] combined = new byte[salt.Length + pinBytes.Length];
+        Buffer.BlockCopy(salt, 0, combined, 0, salt.Length);
+        Buffer.BlockCopy(pinBytes, 0, combined, salt.Length, pinBytes.Length);
+
+        using var sha = SHA256.Create();
+        byte[] hash = sha.ComputeHash(combined);
+
+        return (Convert.ToBase64String(hash), Convert.ToBase64String(salt));
+    }
+
+    private static bool VerifyPinHash(string pin, string saltBase64, string hashBase64)
+    {
+        try
+        {
+            byte[] salt = Convert.FromBase64String(saltBase64);
+            byte[] pinBytes = Encoding.UTF8.GetBytes(pin);
+            byte[] combined = new byte[salt.Length + pinBytes.Length];
+            Buffer.BlockCopy(salt, 0, combined, 0, salt.Length);
+            Buffer.BlockCopy(pinBytes, 0, combined, salt.Length, pinBytes.Length);
+
+            using var sha = SHA256.Create();
+            byte[] computedHash = sha.ComputeHash(combined);
+            byte[] storedHash = Convert.FromBase64String(hashBase64);
+            return CryptographicOperations.FixedTimeEquals(computedHash, storedHash);
+        }
+        catch
+        {
+            return false;
+        }
     }
 
     /// <summary>

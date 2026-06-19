@@ -14,7 +14,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyCopyrightAttribute("Copyright © 2024 KeywordGuard")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+8998d4fcd86a0880e7380c6a3df5bb983e74c211")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+7ffb35f3ee7303725fd3c80346dd45a441e9f330")]
 [assembly: System.Reflection.AssemblyProductAttribute("KeywordGuard Pro")]
 [assembly: System.Reflection.AssemblyTitleAttribute("KeywordGuard.Pro.Service")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]
