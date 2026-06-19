@@ -1,4 +1,4 @@
-# ============================================================
+﻿# ============================================================
 # FINAL-Install.ps1 - KeywordGuard Pro (NEUAUFLAGE)
 # ============================================================
 # NEU: Saubere Architektur ohne Altlasten!
@@ -132,7 +132,7 @@ try {
 
 # 7. Standardberechtigungen beibehalten
 Write-Host "[7/8] Behalte Standard-Dateiberechtigungen bei... " -ForegroundColor Yellow
-Write-Host "   Keine manipulativen ACL-Änderungen angewendet." -ForegroundColor Gray
+Write-Host "   Keine manipulativen ACL-Aenderungen angewendet." -ForegroundColor Gray
 
 # 8. Autostart konfigurieren (OHNE sofortigen Start)
 Write-Host "[8/8] Konfiguriere Autostart... " -ForegroundColor Yellow
