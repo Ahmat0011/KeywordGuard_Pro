@@ -47,3 +47,5 @@ D:/sahma/Documents/GitHub/KeywordGuard_Pro/KeywordGuard.Pro.UI/obj/Debug/net10.0
 /home/runner/work/KeywordGuard_Pro/KeywordGuard_Pro/KeywordGuard.Pro.UI/obj/Debug/net10.0-windows/KeywordGuard.Pro.UI.pdb
 /home/runner/work/KeywordGuard_Pro/KeywordGuard_Pro/KeywordGuard.Pro.UI/obj/Debug/net10.0-windows/KeywordGuard.Pro.UI.genruntimeconfig.cache
 /home/runner/work/KeywordGuard_Pro/KeywordGuard_Pro/KeywordGuard.Pro.UI/obj/Debug/net10.0-windows/ref/KeywordGuard.Pro.UI.dll
+/home/runner/work/KeywordGuard_Pro/KeywordGuard_Pro/KeywordGuard.Pro.UI/obj/Debug/net10.0-windows/HiddenAccessWindow.baml
+/home/runner/work/KeywordGuard_Pro/KeywordGuard_Pro/KeywordGuard.Pro.UI/obj/Debug/net10.0-windows/HiddenAccessWindow.g.cs
