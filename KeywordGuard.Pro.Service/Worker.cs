@@ -13,10 +13,11 @@ namespace KeywordGuard.Pro.Service;
 /// </summary>
 public class Worker : BackgroundService
 {
+    private const string AgentProcessName = "KeywordGuard.Pro.Agent";
     private readonly ILogger<Worker> _logger;
     private bool _isShuttingDown = false;
     private bool _wasEverActive = false;
-    private string? _agentExePath;
+    private bool _agentSeenWhileLoggedIn = false;
 
     public Worker(ILogger<Worker> logger)
     {
@@ -31,37 +32,26 @@ public class Worker : BackgroundService
         });
 
         _logger.LogInformation("Service gestartet.");
-        _agentExePath = Path.Combine(AppContext.BaseDirectory, "KeywordGuard.Pro.Agent.exe");
+        bool protectionApplied = ProcessHardening.ApplySelfProtection();
+        _logger.LogInformation("Service-Selbstschutz aktiv: {ProtectionApplied}", protectionApplied);
 
         while (!stoppingToken.IsCancellationRequested && !_isShuttingDown)
         {
             try
             {
+                if (ProcessHardening.IsSystemShuttingDown())
+                {
+                    _isShuttingDown = true;
+                    break;
+                }
+
                 var config = ConfigStore.Load();
                 bool shouldBeActive = config != null && config.IsActive();
+                bool userLoggedIn = IsUserLoggedIn();
 
                 if (shouldBeActive)
                 {
                     _wasEverActive = true;
-
-                    // Agent ueberwachen
-                    var agentProcs = Process.GetProcessesByName("KeywordGuard.Pro.Agent");
-                    if (agentProcs.Length == 0)
-                    {
-                        if (IsUserLoggedIn())
-                        {
-                            _logger.LogInformation("Starte Agent via TaskScheduler...");
-                            bool started = TaskSchedulerGuard.RunAgentTask();
-                            if (!started)
-                            {
-                                _logger.LogWarning("TaskScheduler-Start fehlgeschlagen.");
-                            }
-                        }
-                    }
-                    else
-                    {
-                        foreach (var p in agentProcs) p.Dispose();
-                    }
                 }
                 else
                 {
@@ -74,6 +64,36 @@ public class Worker : BackgroundService
                     else
                     {
                         _wasEverActive = false;
+                    }
+                }
+
+                var agentProcesses = Process.GetProcessesByName(AgentProcessName);
+                bool agentRunning = agentProcesses.Length > 0;
+                foreach (var process in agentProcesses)
+                {
+                    process.Dispose();
+                }
+
+                if (agentRunning)
+                {
+                    _agentSeenWhileLoggedIn = userLoggedIn;
+                }
+                else if (!userLoggedIn)
+                {
+                    _agentSeenWhileLoggedIn = false;
+                }
+                else if (_agentSeenWhileLoggedIn)
+                {
+                    TriggerPartnerLossShutdown("Agent-Prozess wurde unerwartet beendet.");
+                    break;
+                }
+                else if (shouldBeActive)
+                {
+                    _logger.LogInformation("Starte Agent via TaskScheduler...");
+                    bool started = TaskSchedulerGuard.RunAgentTask();
+                    if (!started)
+                    {
+                        _logger.LogWarning("TaskScheduler-Start fehlgeschlagen.");
                     }
                 }
             }
@@ -92,6 +112,23 @@ public class Worker : BackgroundService
     {
         _isShuttingDown = true;
         await base.StopAsync(cancellationToken);
+    }
+
+    private void TriggerPartnerLossShutdown(string message)
+    {
+        if (ProcessHardening.IsSystemShuttingDown())
+        {
+            _isShuttingDown = true;
+            return;
+        }
+
+        _isShuttingDown = true;
+        _logger.LogCritical("{Message}", message);
+
+        if (!ProcessHardening.TriggerEmergencyShutdown(message))
+        {
+            _logger.LogCritical("Not-Herunterfahren konnte nicht gestartet werden.");
+        }
     }
 
     private static bool IsUserLoggedIn()

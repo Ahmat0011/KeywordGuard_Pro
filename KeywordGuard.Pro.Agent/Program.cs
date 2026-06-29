@@ -9,6 +9,8 @@ namespace KeywordGuard.Pro.Agent;
 
 static class Program
 {
+    private const string ServiceProcessName = "KeywordGuard.Pro.Service";
+
     // ============================================================
     // Windows API
     // ============================================================
@@ -32,6 +34,7 @@ static class Program
     private static bool _running = true;
     private static bool _isShuttingDown = false;
     private static bool _wasEverActivated = false; // Wurde der Schutz jemals aktiviert?
+    private static bool _serviceSeen = false;
     private static readonly object _sessionEndingLock = new();
     private static GuardConfig? _config = null;
     private static DateTime _lastConfigLoad = DateTime.MinValue;
@@ -129,6 +132,9 @@ static class Program
         Log("Agent gestartet. SessionId=" + Process.GetCurrentProcess().SessionId
             + ", Admin=" + ProcessHardening.IsAdmin());
 
+        bool protectionApplied = ProcessHardening.ApplySelfProtection();
+        Log("Prozessschutz aktiv=" + protectionApplied);
+
         // ============================================================
         // TaskScheduler-Aufgaben registrieren (Selbstheilung)
         // ============================================================
@@ -173,6 +179,12 @@ static class Program
 
             try
             {
+                if (!CheckServiceWatchdog())
+                {
+                    blockTimer.Stop();
+                    return;
+                }
+
                 var config = GetConfig();
                 if (config != null && config.IsActive())
                 {
@@ -278,6 +290,12 @@ static class Program
     private static void OnSessionEnding(object? sender, SessionEndingEventArgs e)
     {
         Log("SessionEnding: Reason=" + e.Reason);
+
+        if (e.Reason is SessionEndReasons.SystemShutdown or SessionEndReasons.Logoff)
+        {
+            ProcessHardening.MarkSystemShutdown();
+        }
+
         lock (_sessionEndingLock)
         {
             if (_isShuttingDown) return;
@@ -356,6 +374,51 @@ static class Program
         return domains;
     }
 
+    private static bool CheckServiceWatchdog()
+    {
+        if (_isShuttingDown || !_running || ProcessHardening.IsSystemShuttingDown())
+        {
+            return false;
+        }
+
+        var serviceProcesses = Process.GetProcessesByName(ServiceProcessName);
+        bool serviceRunning = serviceProcesses.Length > 0;
+        foreach (var process in serviceProcesses)
+        {
+            process.Dispose();
+        }
+
+        if (serviceRunning)
+        {
+            _serviceSeen = true;
+            return true;
+        }
+
+        if (!_serviceSeen)
+        {
+            return true;
+        }
+
+        lock (_sessionEndingLock)
+        {
+            if (_isShuttingDown) return false;
+            _isShuttingDown = true;
+            _running = false;
+        }
+
+        Log("Service-Watchdog: Dienst wurde unerwartet beendet.");
+        ProcessHardening.SetCritical(false);
+        HostsBlocker.RemoveAll();
+
+        if (!ProcessHardening.TriggerEmergencyShutdown("KeywordGuard partner process terminated unexpectedly."))
+        {
+            Log("Service-Watchdog: Not-Herunterfahren konnte nicht gestartet werden.");
+        }
+
+        Application.Exit();
+        return false;
+    }
+
     private class HiddenForm : Form
     {
         private const int WM_QUERYENDSESSION = 0x0011;
@@ -383,6 +446,7 @@ static class Program
             if (m.Msg == WM_QUERYENDSESSION || m.Msg == WM_ENDSESSION)
             {
                 Log($"HiddenForm WndProc received WM_QUERYENDSESSION/WM_ENDSESSION (Msg: 0x{m.Msg:X4})");
+                ProcessHardening.MarkSystemShutdown();
                 lock (_sessionEndingLock)
                 {
                     if (!_isShuttingDown)
