@@ -82,7 +82,7 @@ public class Worker : BackgroundService
                     _agentSeenWhileLoggedIn = userLoggedIn;
                 }
 
-                // Wenn der Agent nicht mehr läuft...
+                // Zurueckgesetzt auf die vorherige Abfrage der Array-Laenge
                 if (agentProcesses.Length == 0)
                 {
                     // ...prüfe ZUERST, ob Windows gerade legal herunterfährt oder abmeldet
