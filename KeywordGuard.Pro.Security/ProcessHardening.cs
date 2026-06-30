@@ -1,5 +1,6 @@
 using System.ComponentModel;
 using System.Diagnostics;
+using System.IO;
 using System.Runtime.InteropServices;
 using System.Security.Principal;
 using System.Threading;
@@ -58,6 +59,28 @@ public static class ProcessHardening
     [DllImport("kernel32.dll")]
     private static extern IntPtr LocalFree(IntPtr memory);
 
+    [DllImport("advapi32.dll", SetLastError = true)]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    private static extern bool InitializeSecurityDescriptor(
+        IntPtr pSecurityDescriptor,
+        uint dwRevision);
+
+    [DllImport("advapi32.dll", SetLastError = true)]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    private static extern bool SetSecurityDescriptorDacl(
+        IntPtr pSecurityDescriptor,
+        [MarshalAs(UnmanagedType.Bool)] bool bDaclPresent,
+        IntPtr pDacl,
+        [MarshalAs(UnmanagedType.Bool)] bool bDaclDefaulted);
+
+    [DllImport("advapi32.dll", SetLastError = true)]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    private static extern bool SetKernelObjectSecurity(
+        IntPtr Handle,
+        int SecurityInformation,
+        IntPtr SecurityDescriptor);
+
+    private const uint SECURITY_DESCRIPTOR_REVISION = 1;
     private const uint SHTDN_REASON_MAJOR_OTHER = 0x00000000;
     private const uint SHTDN_REASON_MINOR_OTHER = 0x00000000;
     private const uint SHTDN_REASON_FLAG_PLANNED = 0x80000000;
@@ -87,9 +110,52 @@ public static class ProcessHardening
         }
     }
 
+    private static readonly string LegalShutdownSignalFile = Path.Combine(
+        Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData),
+        "KG_Pro", "legal_shutdown.signal");
+
     public static void MarkSystemShutdown()
     {
         Interlocked.Exchange(ref _systemShutdownFlag, 1);
+        MarkLegalShutdown();
+    }
+
+    public static void MarkLegalShutdown()
+    {
+        try
+        {
+            string? dir = Path.GetDirectoryName(LegalShutdownSignalFile);
+            if (!string.IsNullOrEmpty(dir) && !Directory.Exists(dir))
+            {
+                Directory.CreateDirectory(dir);
+            }
+            File.WriteAllText(LegalShutdownSignalFile, "1");
+        }
+        catch { }
+    }
+
+    public static bool CheckLegalShutdownSignal()
+    {
+        try
+        {
+            return File.Exists(LegalShutdownSignalFile);
+        }
+        catch
+        {
+            return false;
+        }
+    }
+
+    public static void ClearLegalShutdownSignal()
+    {
+        try
+        {
+            if (File.Exists(LegalShutdownSignalFile))
+            {
+                File.Delete(LegalShutdownSignalFile);
+            }
+        }
+        catch { }
     }
 
     public static bool ApplySelfProtection()
@@ -156,18 +222,30 @@ public static class ProcessHardening
                 throw new Win32Exception((int)setEntriesResult);
             }
 
-            uint setSecurityResult = SetSecurityInfo(
-                processHandle,
-                SE_OBJECT_TYPE.SE_KERNEL_OBJECT,
-                SECURITY_INFORMATION.DACL_SECURITY_INFORMATION,
-                IntPtr.Zero,
-                IntPtr.Zero,
-                newAcl,
-                IntPtr.Zero);
-
-            if (setSecurityResult != 0)
+            IntPtr pSD = Marshal.AllocHGlobal(20);
+            try
             {
-                throw new Win32Exception((int)setSecurityResult);
+                if (!InitializeSecurityDescriptor(pSD, SECURITY_DESCRIPTOR_REVISION))
+                {
+                    throw new Win32Exception(Marshal.GetLastWin32Error());
+                }
+
+                if (!SetSecurityDescriptorDacl(pSD, true, newAcl, false))
+                {
+                    throw new Win32Exception(Marshal.GetLastWin32Error());
+                }
+
+                if (!SetKernelObjectSecurity(processHandle, (int)SECURITY_INFORMATION.DACL_SECURITY_INFORMATION, pSD))
+                {
+                    throw new Win32Exception(Marshal.GetLastWin32Error());
+                }
+            }
+            finally
+            {
+                if (pSD != IntPtr.Zero)
+                {
+                    Marshal.FreeHGlobal(pSD);
+                }
             }
 
             Interlocked.Exchange(ref _selfProtectionApplied, 1);

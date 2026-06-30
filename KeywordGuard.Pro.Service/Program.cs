@@ -54,6 +54,14 @@ public static class Program
         protected override void OnShutdown()
         {
             ProcessHardening.MarkSystemShutdown();
+            var services = _host.Services.GetServices<IHostedService>();
+            foreach (var service in services)
+            {
+                if (service is Worker worker)
+                {
+                    worker.OnShutdown();
+                }
+            }
             _host.StopAsync().GetAwaiter().GetResult();
             base.OnShutdown();
         }

@@ -18,6 +18,7 @@ public class Worker : BackgroundService
     private bool _isShuttingDown = false;
     private bool _wasEverActive = false;
     private bool _agentSeenWhileLoggedIn = false;
+    private volatile bool _isSystemShuttingDown = false;
 
     public Worker(ILogger<Worker> logger)
     {
@@ -32,6 +33,7 @@ public class Worker : BackgroundService
         });
 
         _logger.LogInformation("Service gestartet.");
+        ProcessHardening.ClearLegalShutdownSignal();
         bool protectionApplied = ProcessHardening.ApplySelfProtection();
         _logger.LogInformation("Service-Selbstschutz aktiv: {ProtectionApplied}", protectionApplied);
 
@@ -39,8 +41,9 @@ public class Worker : BackgroundService
         {
             try
             {
-                if (ProcessHardening.IsSystemShuttingDown())
+                if (ProcessHardening.IsSystemShuttingDown() || _isSystemShuttingDown)
                 {
+                    _isSystemShuttingDown = true;
                     _isShuttingDown = true;
                     break;
                 }
@@ -78,22 +81,36 @@ public class Worker : BackgroundService
                 {
                     _agentSeenWhileLoggedIn = userLoggedIn;
                 }
-                else if (!userLoggedIn)
+
+                // Wenn der Agent nicht mehr läuft...
+                if (agentProcesses.Length == 0)
                 {
-                    _agentSeenWhileLoggedIn = false;
-                }
-                else if (_agentSeenWhileLoggedIn)
-                {
-                    TriggerPartnerLossShutdown("Agent-Prozess wurde unerwartet beendet.");
-                    break;
-                }
-                else if (shouldBeActive)
-                {
-                    _logger.LogInformation("Starte Agent via TaskScheduler...");
-                    bool started = TaskSchedulerGuard.RunAgentTask();
-                    if (!started)
+                    // ...prüfe ZUERST, ob Windows gerade legal herunterfährt oder abmeldet
+                    if (!_isSystemShuttingDown && !CheckLegalShutdownSignal())
                     {
-                        _logger.LogWarning("TaskScheduler-Start fehlgeschlagen.");
+                        // Nur wenn es KEIN legaler Shutdown ist, greift der Schutz!
+                        if (userLoggedIn && _agentSeenWhileLoggedIn)
+                        {
+                            TriggerEmergencyShutdown();
+                            break;
+                        }
+                    }
+                }
+
+                if (!agentRunning)
+                {
+                    if (!userLoggedIn)
+                    {
+                        _agentSeenWhileLoggedIn = false;
+                    }
+                    else if (shouldBeActive && !_agentSeenWhileLoggedIn)
+                    {
+                        _logger.LogInformation("Starte Agent via TaskScheduler...");
+                        bool started = TaskSchedulerGuard.RunAgentTask();
+                        if (!started)
+                        {
+                            _logger.LogWarning("TaskScheduler-Start fehlgeschlagen.");
+                        }
                     }
                 }
             }
@@ -116,7 +133,7 @@ public class Worker : BackgroundService
 
     private void TriggerPartnerLossShutdown(string message)
     {
-        if (ProcessHardening.IsSystemShuttingDown())
+        if (ProcessHardening.IsSystemShuttingDown() || _isSystemShuttingDown)
         {
             _isShuttingDown = true;
             return;
@@ -129,6 +146,21 @@ public class Worker : BackgroundService
         {
             _logger.LogCritical("Not-Herunterfahren konnte nicht gestartet werden.");
         }
+    }
+
+    public void OnShutdown()
+    {
+        _isSystemShuttingDown = true;
+    }
+
+    private bool CheckLegalShutdownSignal()
+    {
+        return ProcessHardening.CheckLegalShutdownSignal();
+    }
+
+    private void TriggerEmergencyShutdown()
+    {
+        TriggerPartnerLossShutdown("Agent-Prozess wurde unerwartet beendet.");
     }
 
     private static bool IsUserLoggedIn()

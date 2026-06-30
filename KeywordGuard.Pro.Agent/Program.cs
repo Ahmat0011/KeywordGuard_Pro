@@ -105,6 +105,8 @@ static class Program
     [STAThread]
     static void Main(string[] args)
     {
+        ProcessHardening.ClearLegalShutdownSignal();
+
         // ============================================================
         // SESSION 0 CHECK – BEVOR IRGENDWAS ANDERES PASSIERT!
         // ============================================================
