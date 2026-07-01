@@ -20,6 +20,9 @@ public class Worker : BackgroundService
     private bool _agentSeenWhileLoggedIn = false;
     private volatile bool _isSystemShuttingDown = false;
 
+    // Zähler, um kurze System-Ruckler oder Ladezeiten zu tolerieren
+    private int _agentMissingCount = 0;
+
     public Worker(ILogger<Worker> logger)
     {
         _logger = logger;
@@ -36,6 +39,12 @@ public class Worker : BackgroundService
         ProcessHardening.ClearLegalShutdownSignal();
         bool protectionApplied = ProcessHardening.ApplySelfProtection();
         _logger.LogInformation("Service-Selbstschutz aktiv: {ProtectionApplied}", protectionApplied);
+
+        _logger.LogInformation("Windows-Schnellstart-Schutz: Warte 15 Sekunden auf System-Synchronisation...");
+        // 15 Sekunden Gnadenfrist beim allerersten Systemstart/Aufwachen
+        await Task.Delay(15000, stoppingToken);
+
+        _logger.LogInformation("Watchdog-Überwachung aktiv geschaltet.");
 
         while (!stoppingToken.IsCancellationRequested && !_isShuttingDown)
         {
@@ -58,8 +67,6 @@ public class Worker : BackgroundService
                 }
                 else
                 {
-                    // Config geloescht? Dann Schutz NICHT deaktivieren.
-                    // Timer abgelaufen? Dann Schutz deaktivieren.
                     if (config == null && _wasEverActive)
                     {
                         // Config geloescht – Schutz bleibt!
@@ -80,16 +87,25 @@ public class Worker : BackgroundService
                 if (agentRunning)
                 {
                     _agentSeenWhileLoggedIn = userLoggedIn;
+                    _agentMissingCount = 0; // Zurücksetzen, da der Agent stabil läuft
+                }
+                else
+                {
+                    if (userLoggedIn && _agentSeenWhileLoggedIn)
+                    {
+                        _agentMissingCount++; // Agent fehlt, erhöhe den Toleranz-Zähler
+                    }
                 }
 
-                // Zurueckgesetzt auf die vorherige Abfrage der Array-Laenge
+                // Wenn der Agent nicht mehr läuft...
                 if (agentProcesses.Length == 0)
                 {
                     // ...prüfe ZUERST, ob Windows gerade legal herunterfährt oder abmeldet
                     if (!_isSystemShuttingDown && !CheckLegalShutdownSignal())
                     {
                         // Nur wenn es KEIN legaler Shutdown ist, greift der Schutz!
-                        if (userLoggedIn && _agentSeenWhileLoggedIn)
+                        // Der Schutz löst erst aus, wenn der Agent 3 Mal hintereinander (6 Sekunden) fehlte
+                        if (userLoggedIn && _agentSeenWhileLoggedIn && _agentMissingCount >= 3)
                         {
                             TriggerEmergencyShutdown();
                             break;
